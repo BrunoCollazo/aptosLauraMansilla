@@ -151,10 +151,39 @@ aceptarCheckbox.addEventListener("change", () => {
   confirmarPagoBtn.disabled = !aceptarCheckbox.checked;
 });
 
-confirmarPagoBtn.addEventListener("click", () => {
+confirmarPagoBtn.addEventListener("click", async () => {
   modal.classList.add("hidden");
 
-  const noches = nochesSelect.value;
-  const opcion = selector.value;
-  // Aquí después va la integración con Fiserv
+  const noches = parseInt(nochesSelect.value);
+  const opcion = parseInt(selector.value);
+
+  try {
+
+    const response = await fetch("http://localhost:8080/api/payments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        apartmentId: opcion,
+        nights: noches,
+        clientEmail: "cliente@test.com"
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Error al crear el pago");
+    }
+
+    const data = await response.json();
+
+    // Redirige al gateway de pago
+    window.location.href = data.redirectUrl;
+
+  } catch (error) {
+
+    console.error(error);
+    alert("Hubo un problema al iniciar el pago. Intenta nuevamente.");
+
+  }
 });
