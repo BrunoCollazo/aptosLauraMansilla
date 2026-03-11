@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle del apartamento</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="header">
+  <h1 id="backTitle" class="back-title">
+    Apartamentos Laura Mansilla
+  </h1>
+  <p>Seleccioná tu apartamento</p>
+</header>
+
+
+<main class="containerDetalle">
+
+  <!-- DETALLES -->
+  <section class="details">
+    <h2 id="titulo">Apartamento – Opción 1</h2>
+
+    <p id="descripcion">
+      Apartamento cómodo con cama individual y sofa cama de plaza y media.
+    </p>
+    <p id="equipado">
+      Cuenta con:
+      Smart TV, Aire Acondicionado, Servicio de limpieza, cambio de taollas y ropa de cama, baño privado
+    </p>
+    <p class="price">
+      Precio por noche: <strong>$2.500</strong>
+    </p>
+  </section>
+
+  <!-- GALERÍA -->
+  <section class="carousel">
+
+    <button class="nav prev" aria-label="Anterior">‹</button>
+
+    <div class="carousel-track">
+
+      <div class="slide">
+        <img src="assets/images/CamaConToallas.jpg" alt="Cama con toallas">
+      </div>
+
+      <div class="slide">
+        <img src="assets/images/Fachada.jpg" alt="Fachada del apartamento">
+      </div>
+
+      <div class="slide">
+        <img src="assets/images/Cama.jpg" alt="Dormitorio">
+      </div>
+
+      <div class="slide">
+        <video controls>
+          <source src="assets/images/EntrandoDpto.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <div class="slide">
+        <video controls>
+          <source src="assets/images/PorAdentro.mp4" type="video/mp4">
+        </video>
+      </div>
+
+    </div>
+
+    <button class="nav next" aria-label="Siguiente">›</button>
+
+  </section>
+
+  <!-- SELECTOR -->
+  <section class="selector">
+    <label for="opcion">Elegí el apartamento:</label>
+    <select id="opcion">
+      <option value="1">Opción 1</option>
+      <option value="2">Opción 2</option>
+      <option value="3">Opción 3</option>
+      <option value="4">Opción 4</option>
+    </select>
+  </section>
+<!-- RESERVA / PAGO -->
+<section class="booking">
+
+  <div class="nights">
+    <label for="noches">Cantidad de noches:</label>
+    <input 
+      type="number" 
+      id="noches" 
+      min="1" 
+      max="30" 
+      value="1" 
+      step="1"
+    />
+  </div>
+
+  <div class="total">
+    Total: <strong id="total">$2.500</strong>
+  </div>
+
+  <button id="btnPago" class="btn-pago">
+    Continuar con el pago
+  </button>
+
+</section>
+
+</main>
+
+<div id="lightbox" class="lightbox hidden">
+  <div class="lightbox-content">
+    <img id="lightbox-img" />
+    <video id="lightbox-video" controls></video>
+  </div>
+</div>
+
+
+<div id="legalModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Confirmación requerida</h3>
+
+    <p>
+      Este sitio funciona únicamente como medio de pago.
+      La reserva y disponibilidad deben haber sido coordinadas
+      previamente con el propietario.
+    </p>
+
+    <label class="checkbox">
+      <input type="checkbox" id="aceptoLegal">
+      Acepto las condiciones
+    </label>
+
+    <button id="confirmarPago" disabled>
+      Confirmar y continuar
+    </button>
+  </div>
+</div>
+
+
+
+<script src="js/detalle.js"></script>
+
+
+</body>
+</html>
