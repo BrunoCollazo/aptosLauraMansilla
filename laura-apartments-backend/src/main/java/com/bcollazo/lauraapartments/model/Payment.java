@@ -29,7 +29,12 @@ public class Payment {
 
     private BigDecimal totalAmount;
 
-    private String fiservToken;
+    private String fiservToken; // Stores accessToken from initiation
+
+    private String paymentToken; // Stores paymentToken from webhook/callback
+
+    @Column(unique = true)
+    private String reference;
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;

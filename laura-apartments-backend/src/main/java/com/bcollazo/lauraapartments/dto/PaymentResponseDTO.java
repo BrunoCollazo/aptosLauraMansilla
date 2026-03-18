@@ -10,5 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentResponseDTO {
-    private String redirectUrl;
+    private String pageUrl;
+    private String token;
+    private String reference;
 }
