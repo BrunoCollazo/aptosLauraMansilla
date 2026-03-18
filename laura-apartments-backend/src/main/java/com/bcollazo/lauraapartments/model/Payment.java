@@ -1,10 +1,6 @@
 package com.bcollazo.lauraapartments.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +21,9 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long apartmentId;
+    @ManyToOne
+    @JoinColumn(name = "apartment_id")
+    private Apartment apartment;
 
     private Integer nights;
 
@@ -33,7 +31,8 @@ public class Payment {
 
     private String fiservToken;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

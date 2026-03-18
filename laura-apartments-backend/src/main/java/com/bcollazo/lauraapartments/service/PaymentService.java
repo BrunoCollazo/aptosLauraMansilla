@@ -5,6 +5,7 @@ import com.bcollazo.lauraapartments.dto.PaymentResponseDTO;
 import com.bcollazo.lauraapartments.integration.FiservClient;
 import com.bcollazo.lauraapartments.model.Apartment;
 import com.bcollazo.lauraapartments.model.Payment;
+import com.bcollazo.lauraapartments.model.PaymentStatus;
 import com.bcollazo.lauraapartments.repository.ApartmentRepository;
 import com.bcollazo.lauraapartments.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,34 +25,42 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponseDTO createPayment(PaymentRequestDTO request) {
-        // 1. Validate apartment existence and availability
-        Apartment apartment = apartmentRepository.findById(request.getApartmentId())
+
+        // 1. Validate apartment existence
+        Apartment apartment = apartmentRepository
+                .findById(request.getApartmentId())
                 .orElseThrow(() -> new RuntimeException("Apartment not found"));
 
+        // 2. Validate availability
         if (!apartment.isAvailable()) {
             throw new RuntimeException("Apartment is not available for rental");
         }
 
-        // 2. Calculate final price using PricingService
+        // 3. Calculate price
         BigDecimal totalAmount = pricingService.calculateTotalAmount(
-                apartment.getPricePerNight(), 
+                apartment.getPricePerNight(),
                 request.getNights()
         );
 
-        // 3. Interact with Fiserv integration placeholder
-        String redirectUrl = fiservClient.createPaymentSession(totalAmount, request.getClientEmail());
+        // 4. Generate Fiserv token (placeholder for now)
         String fiservToken = fiservClient.generateToken();
 
-        // 4. Create and save payment record
+        // 5. Create payment record
         Payment payment = Payment.builder()
-                .apartmentId(apartment.getId())
+                .apartment(apartment)   // <-- relación JPA
                 .nights(request.getNights())
                 .totalAmount(totalAmount)
                 .fiservToken(fiservToken)
-                .status("PENDING")
+                .status(PaymentStatus.PENDING)  // <-- enum
                 .build();
 
         paymentRepository.save(payment);
+
+        // 6. Create payment session (redirect to gateway)
+        String redirectUrl = fiservClient.createPaymentSession(
+                totalAmount,
+                request.getClientEmail()
+        );
 
         return PaymentResponseDTO.builder()
                 .redirectUrl(redirectUrl)

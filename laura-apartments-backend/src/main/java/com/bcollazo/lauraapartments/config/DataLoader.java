@@ -24,7 +24,7 @@ public class DataLoader implements CommandLineRunner {
                 Apartment apartment = new Apartment();
                 apartment.setName("Apartamento " + i);
                 apartment.setAvailable(true);
-                apartment.setPricePerNight(new BigDecimal("4000"));
+                apartment.setPricePerNight(new BigDecimal("2500"));
 
                 apartmentRepository.save(apartment);
             }
