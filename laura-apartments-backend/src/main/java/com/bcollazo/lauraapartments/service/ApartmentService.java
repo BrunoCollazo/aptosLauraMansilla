@@ -1,7 +1,7 @@
 package com.bcollazo.lauraapartments.service;
 
-import com.bcollazo.lauraapartments.dto.ApartmentResponseDTO;
-import com.bcollazo.lauraapartments.model.Apartment;
+import com.bcollazo.lauraapartments.dto.response.ApartmentResponseDTO;
+import com.bcollazo.lauraapartments.entity.Apartment;
 import com.bcollazo.lauraapartments.repository.ApartmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

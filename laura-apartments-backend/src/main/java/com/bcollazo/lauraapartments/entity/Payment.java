@@ -1,4 +1,4 @@
-package com.bcollazo.lauraapartments.model;
+package com.bcollazo.lauraapartments.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -28,6 +28,8 @@ public class Payment {
     private Integer nights;
 
     private BigDecimal totalAmount;
+
+    private String clientEmail;
 
     private String fiservToken; // Stores accessToken from initiation
 

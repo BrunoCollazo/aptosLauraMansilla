@@ -1,9 +1,9 @@
 package com.bcollazo.lauraapartments.integration;
 
 import com.bcollazo.lauraapartments.config.FiservConfig;
-import com.bcollazo.lauraapartments.dto.FiservPaymentResultDTO;
-import com.bcollazo.lauraapartments.dto.FiservRequestDTO;
-import com.bcollazo.lauraapartments.dto.FiservResponseDTO;
+import com.bcollazo.lauraapartments.dto.response.FiservPaymentResultDTO;
+import com.bcollazo.lauraapartments.dto.request.FiservRequestDTO;
+import com.bcollazo.lauraapartments.dto.response.FiservResponseDTO;
 import com.bcollazo.lauraapartments.service.FiservSignatureService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +13,6 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -71,8 +70,8 @@ public class FiservClient {
             if ("00".equals(response.getResponseHeader().getResponseCode())) {
                 return response.getToken();
             } else {
-                log.error("Fiserv payment initiation failed: {} - {}", 
-                        response.getResponseHeader().getResponseCode(), 
+                log.error("Fiserv payment initiation failed: {} - {}",
+                        response.getResponseHeader().getResponseCode(),
                         response.getResponseHeader().getResponseDescription());
                 throw new RuntimeException("Fiserv initiation failed: " + response.getResponseHeader().getResponseDescription());
             }
@@ -92,25 +91,26 @@ public class FiservClient {
         header.put("auditNumber", auditNumber);
         header.put("dateTime", dateTime);
 
-        Map<String, Object> bodyForSign = new HashMap<>();
-        bodyForSign.put("requestHeader", header);
-        bodyForSign.put("accessToken", accessToken);
+        Map<String, Object> body = new HashMap<>();
+        body.put("requestHeader", header);
+        body.put("accessToken", accessToken);
 
-        String signature = signatureService.generateSign(bodyForSign);
-        
-        String url = UriComponentsBuilder.fromHttpUrl(config.getBaseUrl() + "/paymentQuery")
-                .queryParam("requestHeader.netId", config.getNetId())
-                .queryParam("requestHeader.version", config.getVersion() != null ? config.getVersion() : "3.02")
-                .queryParam("requestHeader.auditNumber", auditNumber)
-                .queryParam("requestHeader.dateTime", dateTime)
-                .queryParam("requestHeader.digitalSign", signature)
-                .queryParam("accessToken", accessToken)
-                .build().toUriString();
+        String signature = signatureService.generateSign(body);
+        header.put("digitalSign", signature);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<FiservResponseDTO> responseEntity = restTemplate.exchange(url, HttpMethod.GET, null, FiservResponseDTO.class);
+            ResponseEntity<FiservResponseDTO> responseEntity = restTemplate.exchange(
+                    config.getBaseUrl() + "/paymentQuery",
+                    HttpMethod.GET,
+                    request,
+                    FiservResponseDTO.class
+            );
             FiservResponseDTO response = responseEntity.getBody();
-            
+
             if (response != null && response.getResponseHeader() != null) {
                 // Verify response signature
                 Map<String, Object> responseMap = objectMapper.convertValue(response, new TypeReference<Map<String, Object>>() {});
@@ -119,7 +119,7 @@ public class FiservClient {
                 }
 
                 if (!"00".equals(response.getResponseHeader().getResponseCode())) {
-                    log.warn("Fiserv paymentQuery returned non-zero code: {} - {}", 
+                    log.warn("Fiserv paymentQuery returned non-zero code: {} - {}",
                             response.getResponseHeader().getResponseCode(),
                             response.getResponseHeader().getResponseDescription());
                 } else if (response.getPayments() != null && !response.getPayments().isEmpty()) {
@@ -134,6 +134,11 @@ public class FiservClient {
 
     @Scheduled(fixedRate = 300000) // 5 minutes
     public void echoTest() {
+        if (!signatureService.isReady()) {
+            log.debug("Skipping echoTest: signature keys are not loaded");
+            return;
+        }
+
         Map<String, Object> requestBody = new HashMap<>();
         String dateTime = ZonedDateTime.now(URUGUAY_ZONE).format(DATE_TIME_FORMATTER);
         String auditNumber = generateAuditNumber();

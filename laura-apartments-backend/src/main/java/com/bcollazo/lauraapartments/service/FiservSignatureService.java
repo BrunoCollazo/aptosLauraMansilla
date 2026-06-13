@@ -23,6 +23,10 @@ public class FiservSignatureService {
     private PrivateKey privateKey;
     private PublicKey fiservPublicKey;
 
+    public boolean isReady() {
+        return privateKey != null && fiservPublicKey != null;
+    }
+
     @PostConstruct
     public void init() {
         try {
@@ -34,9 +38,9 @@ public class FiservSignatureService {
     }
 
     private void loadMerchantPrivateKey() throws Exception {
-        KeyStore keystore = KeyStore.getInstance("JKS");
+        KeyStore keystore = KeyStore.getInstance("PKCS12");
         try (FileInputStream fis = new FileInputStream(fiservConfig.getKeystorePath())) {
-            keystore.load(fis, fiservConfig.getKeystorePass().toCharArray());
+            keystore.load(fis, fiservConfig.getP12Pass().toCharArray());
         }
         privateKey = (PrivateKey) keystore.getKey(fiservConfig.getKeyAlias(), fiservConfig.getKeyPass().toCharArray());
     }
@@ -46,32 +50,6 @@ public class FiservSignatureService {
         try (FileInputStream is = new FileInputStream(fiservConfig.getPublicCertPath())) {
             X509Certificate cer = (X509Certificate) fact.generateCertificate(is);
             fiservPublicKey = cer.getPublicKey();
-        }
-    }
-
-    public String generateSign(Map<String, Object> payload) {
-        try {
-            String textToSign = buildSignatureText(payload);
-            Signature signature = Signature.getInstance("SHA1withRSA");
-            signature.initSign(privateKey);
-            signature.update(textToSign.getBytes(StandardCharsets.UTF_8));
-            byte[] signed = signature.sign();
-            return Base64.getEncoder().encodeToString(signed);
-        } catch (Exception e) {
-            throw new RuntimeException("Error generating Fiserv signature", e);
-        }
-    }
-
-    public boolean verifySign(Map<String, Object> payload, String receivedSign) {
-        try {
-            String textToVerify = buildSignatureText(payload);
-            Signature signature = Signature.getInstance("SHA1withRSA");
-            signature.initVerify(fiservPublicKey);
-            signature.update(textToVerify.getBytes(StandardCharsets.UTF_8));
-            byte[] decodedSign = Base64.getDecoder().decode(receivedSign);
-            return signature.verify(decodedSign);
-        } catch (Exception e) {
-            throw new RuntimeException("Error verifying Fiserv signature", e);
         }
     }
 
@@ -85,8 +63,6 @@ public class FiservSignatureService {
             Object value = map.get(key);
             if (value == null) continue;
 
-            sb.append(key); // Prepend the key name
-
             if (value instanceof Map) {
                 sb.append(buildSignatureText((Map<String, Object>) value));
             } else if (value instanceof List) {
@@ -94,14 +70,40 @@ public class FiservSignatureService {
                     if (item instanceof Map) {
                         sb.append(buildSignatureText((Map<String, Object>) item));
                     } else {
-                        sb.append(sanitize(String.valueOf(item)));
+                        sb.append(key).append(sanitize(String.valueOf(item)));
                     }
                 }
             } else {
-                sb.append(sanitize(String.valueOf(value)));
+                sb.append(key).append(sanitize(String.valueOf(value)));
             }
         }
-        return sb.toString().toUpperCase();
+        return sb.toString();
+    }
+
+    public String generateSign(Map<String, Object> payload) {
+        try {
+            String textToSign = buildSignatureText(payload).toUpperCase();
+            Signature signature = Signature.getInstance("SHA1withRSA");
+            signature.initSign(privateKey);
+            signature.update(textToSign.getBytes(StandardCharsets.UTF_8));
+            byte[] signed = signature.sign();
+            return Base64.getEncoder().encodeToString(signed);
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating Fiserv signature", e);
+        }
+    }
+
+    public boolean verifySign(Map<String, Object> payload, String receivedSign) {
+        try {
+            String textToVerify = buildSignatureText(payload).toUpperCase();
+            Signature signature = Signature.getInstance("SHA1withRSA");
+            signature.initVerify(fiservPublicKey);
+            signature.update(textToVerify.getBytes(StandardCharsets.UTF_8));
+            byte[] decodedSign = Base64.getDecoder().decode(receivedSign);
+            return signature.verify(decodedSign);
+        } catch (Exception e) {
+            throw new RuntimeException("Error verifying Fiserv signature", e);
+        }
     }
 
     private String sanitize(String input) {

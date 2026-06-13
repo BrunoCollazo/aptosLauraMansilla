@@ -1,9 +1,9 @@
 package com.bcollazo.lauraapartments.controller;
 
-import com.bcollazo.lauraapartments.dto.FiservPaymentResultDTO;
-import com.bcollazo.lauraapartments.dto.PaymentRequestDTO;
-import com.bcollazo.lauraapartments.dto.PaymentResponseDTO;
-import com.bcollazo.lauraapartments.model.PaymentStatus;
+import com.bcollazo.lauraapartments.dto.response.FiservPaymentResultDTO;
+import com.bcollazo.lauraapartments.dto.request.PaymentRequestDTO;
+import com.bcollazo.lauraapartments.dto.response.PaymentResponseDTO;
+import com.bcollazo.lauraapartments.entity.PaymentStatus;
 import com.bcollazo.lauraapartments.service.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
@@ -36,11 +36,11 @@ public class PaymentController {
             log.info("Received Fiserv callback: {}", dataJson);
             FiservPaymentResultDTO result = objectMapper.readValue(dataJson, FiservPaymentResultDTO.class);
             PaymentStatus status = paymentService.processCallbackResult(result);
-            
-            String redirectUrl = (status == PaymentStatus.PROCESSED) 
-                    ? "https://www.lauramansilla.com/payment-success" 
+
+            String redirectUrl = (status == PaymentStatus.PROCESSED)
+                    ? "https://www.lauramansilla.com/payment-success"
                     : "https://www.lauramansilla.com/payment-failure";
-            
+
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(URI.create(redirectUrl))
                     .build();
@@ -50,5 +50,11 @@ public class PaymentController {
                     .location(URI.create("https://www.lauramansilla.com/payment-failure"))
                     .build();
         }
+    }
+
+    @GetMapping("/{reference}/sync")
+    public ResponseEntity<PaymentStatus> syncPaymentStatus(@PathVariable String reference) {
+        PaymentStatus status = paymentService.syncPaymentStatus(reference);
+        return ResponseEntity.ok(status);
     }
 }

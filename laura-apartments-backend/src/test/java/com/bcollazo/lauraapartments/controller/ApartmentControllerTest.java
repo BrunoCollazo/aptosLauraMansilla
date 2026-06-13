@@ -1,6 +1,6 @@
 package com.bcollazo.lauraapartments.controller;
 
-import com.bcollazo.lauraapartments.model.Apartment;
+import com.bcollazo.lauraapartments.entity.Apartment;
 import com.bcollazo.lauraapartments.repository.ApartmentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

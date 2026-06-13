@@ -1,5 +1,6 @@
-package com.bcollazo.lauraapartments.dto;
+package com.bcollazo.lauraapartments.dto.response;
 
+import com.bcollazo.lauraapartments.dto.request.FiservRequestDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

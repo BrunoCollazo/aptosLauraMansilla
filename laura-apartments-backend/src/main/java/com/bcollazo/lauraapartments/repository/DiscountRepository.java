@@ -1,6 +1,6 @@
 package com.bcollazo.lauraapartments.repository;
 
-import com.bcollazo.lauraapartments.model.Discount;
+import com.bcollazo.lauraapartments.entity.Discount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

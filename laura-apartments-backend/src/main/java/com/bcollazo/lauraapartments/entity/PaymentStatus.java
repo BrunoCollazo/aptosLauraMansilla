@@ -1,4 +1,4 @@
-package com.bcollazo.lauraapartments.model;
+package com.bcollazo.lauraapartments.entity;
 
 public enum PaymentStatus {
     PENDING,

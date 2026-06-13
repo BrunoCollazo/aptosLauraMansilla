@@ -1,11 +1,14 @@
 package com.bcollazo.lauraapartments.service;
 
 import com.bcollazo.lauraapartments.config.FiservConfig;
-import com.bcollazo.lauraapartments.dto.*;
+import com.bcollazo.lauraapartments.dto.request.FiservRequestDTO;
+import com.bcollazo.lauraapartments.dto.request.PaymentRequestDTO;
+import com.bcollazo.lauraapartments.dto.response.FiservPaymentResultDTO;
+import com.bcollazo.lauraapartments.dto.response.PaymentResponseDTO;
 import com.bcollazo.lauraapartments.integration.FiservClient;
-import com.bcollazo.lauraapartments.model.Apartment;
-import com.bcollazo.lauraapartments.model.Payment;
-import com.bcollazo.lauraapartments.model.PaymentStatus;
+import com.bcollazo.lauraapartments.entity.Apartment;
+import com.bcollazo.lauraapartments.entity.Payment;
+import com.bcollazo.lauraapartments.entity.PaymentStatus;
 import com.bcollazo.lauraapartments.repository.ApartmentRepository;
 import com.bcollazo.lauraapartments.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +55,7 @@ public class PaymentService {
         String today = java.time.LocalDate.now().toString();
         String dueDate = java.time.LocalDate.now().plusDays(request.getNights()).toString();
 
+        String invoiceNumber = String.valueOf(System.currentTimeMillis() % 1000000000L);
         FiservRequestDTO fiservRequest = FiservRequestDTO.builder()
                 .currency("858") // UYU
                 .amount(caratAmount)
@@ -60,7 +64,7 @@ public class PaymentService {
                 .indi(6) // IVA Ley 19.210
                 .reference(reference)
                 .invoice(FiservRequestDTO.Invoice.builder()
-                        .number("INV" + reference.substring(0, 6))
+                        .number(invoiceNumber)
                         .totalAmount(caratAmount)
                         .currency("858")
                         .date(today)
@@ -92,6 +96,7 @@ public class PaymentService {
                 .apartment(apartment)
                 .nights(request.getNights())
                 .totalAmount(totalAmount)
+                .clientEmail(request.getClientEmail())
                 .status(PaymentStatus.PENDING)
                 .fiservToken(token)
                 .reference(reference)
@@ -112,6 +117,11 @@ public class PaymentService {
         Payment payment = paymentRepository.findByReference(reference)
                 .orElseThrow(() -> new RuntimeException("Payment not found for reference: " + reference));
 
+        if (result.getResponseHeader() == null || result.getResponseHeader().getDigitalSign() == null) {
+            log.error("Missing responseHeader or digitalSign in callback for reference: {}", reference);
+            throw new RuntimeException("Missing callback signature");
+        }
+
         // Verify digitalSign
         Map<String, Object> resultMap = objectMapper.convertValue(result, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
         if (!signatureService.verifySign(resultMap, result.getResponseHeader().getDigitalSign())) {
@@ -126,12 +136,12 @@ public class PaymentService {
     }
 
     @Transactional
-    public void syncPaymentStatus(String reference) {
+    public PaymentStatus syncPaymentStatus(String reference) {
         Payment payment = paymentRepository.findByReference(reference)
                 .orElseThrow(() -> new RuntimeException("Payment not found for reference: " + reference));
 
         if (payment.getStatus() != PaymentStatus.PENDING) {
-            return;
+            return payment.getStatus();
         }
 
         fiservClient.queryPayment(payment.getFiservToken()).ifPresent(details -> {
@@ -139,6 +149,8 @@ public class PaymentService {
             paymentRepository.save(payment);
             log.info("Synced payment status for reference {}: {}", reference, payment.getStatus());
         });
+
+        return payment.getStatus();
     }
 
     private void updatePaymentFromDetails(Payment payment, FiservPaymentResultDTO.PaymentDetails details) {
@@ -152,6 +164,8 @@ public class PaymentService {
                 payment.setStatus(PaymentStatus.PROCESSED);
             } else if ("CANCELED".equals(details.getState())) {
                 payment.setStatus(PaymentStatus.FAILED);
+            } else {
+                log.warn("Unhandled payment state '{}' for reference {}", details.getState(), payment.getReference());
             }
         }
     }

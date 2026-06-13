@@ -1,4 +1,4 @@
-package com.bcollazo.lauraapartments.model;
+package com.bcollazo.lauraapartments.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -13,17 +13,19 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "discounts")
+@Table(name = "apartments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Discount {
+public class Apartment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer minNights;
+    private String name;
 
-    private BigDecimal percentage;
+    private boolean available;
+
+    private BigDecimal pricePerNight;
 }

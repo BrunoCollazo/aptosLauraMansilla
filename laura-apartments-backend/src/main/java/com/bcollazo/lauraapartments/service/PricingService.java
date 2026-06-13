@@ -1,6 +1,6 @@
 package com.bcollazo.lauraapartments.service;
 
-import com.bcollazo.lauraapartments.model.Discount;
+import com.bcollazo.lauraapartments.entity.Discount;
 import com.bcollazo.lauraapartments.repository.DiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,12 +17,12 @@ public class PricingService {
 
     public BigDecimal calculateTotalAmount(BigDecimal pricePerNight, int nights) {
         BigDecimal baseTotal = pricePerNight.multiply(new BigDecimal(nights));
-        
+
         // Find the best applicable discount based on number of nights
         List<Discount> applicableDiscounts = discountRepository.findAllByOrderByMinNightsDesc();
-        
+
         BigDecimal percentageDiscount = BigDecimal.ZERO;
-        
+
         for (Discount discount : applicableDiscounts) {
             if (nights >= discount.getMinNights()) {
                 percentageDiscount = discount.getPercentage();

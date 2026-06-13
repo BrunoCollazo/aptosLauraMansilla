@@ -1,6 +1,6 @@
 package com.bcollazo.lauraapartments.controller;
 
-import com.bcollazo.lauraapartments.dto.ApartmentDTO;
+import com.bcollazo.lauraapartments.dto.response.ApartmentDTO;
 import com.bcollazo.lauraapartments.service.AdminApartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +28,7 @@ public class AdminApartmentController {
 
     @PutMapping("/{id}/availability")
     public ResponseEntity<Void> updateAvailability(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestParam boolean available) {
         adminApartmentService.updateAvailability(id, available);
         return ResponseEntity.ok().build();
@@ -36,7 +36,7 @@ public class AdminApartmentController {
 
     @PutMapping("/{id}/price")
     public ResponseEntity<Void> updatePrice(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestParam BigDecimal price) {
         adminApartmentService.updatePrice(id, price);
         return ResponseEntity.ok().build();

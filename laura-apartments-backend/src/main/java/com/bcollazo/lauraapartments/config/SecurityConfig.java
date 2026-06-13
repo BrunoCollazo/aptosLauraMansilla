@@ -22,6 +22,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/**").permitAll()
                         .requestMatchers("/api/admin/**").permitAll()
                         .requestMatchers("/api/fiserv/webhook").permitAll()
+                        .requestMatchers("/api/fiserv/echoTest").permitAll()
                         .anyRequest().permitAll()
                 );
 

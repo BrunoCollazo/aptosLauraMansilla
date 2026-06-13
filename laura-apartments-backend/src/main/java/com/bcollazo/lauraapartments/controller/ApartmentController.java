@@ -1,6 +1,6 @@
 package com.bcollazo.lauraapartments.controller;
 
-import com.bcollazo.lauraapartments.dto.ApartmentResponseDTO;
+import com.bcollazo.lauraapartments.dto.response.ApartmentResponseDTO;
 import com.bcollazo.lauraapartments.service.ApartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

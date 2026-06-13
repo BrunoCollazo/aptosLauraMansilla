@@ -1,6 +1,6 @@
 package com.bcollazo.lauraapartments.repository;
 
-import com.bcollazo.lauraapartments.model.Payment;
+import com.bcollazo.lauraapartments.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

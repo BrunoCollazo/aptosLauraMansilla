@@ -4,6 +4,18 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Secrets ###
+.env
+*.p12
+*.cer
+*.jks
+*.pem
+*.key
+
+### Internal docs (not pushed) ###
+*.md
+!README.md
+
 ### STS ###
 .apt_generated
 .classpath
@@ -31,4 +43,3 @@ build/
 
 ### VS Code ###
 .vscode/
-.env

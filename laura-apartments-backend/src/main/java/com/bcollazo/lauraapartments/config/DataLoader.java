@@ -1,7 +1,9 @@
 package com.bcollazo.lauraapartments.config;
 
-import com.bcollazo.lauraapartments.model.Apartment;
+import com.bcollazo.lauraapartments.entity.Apartment;
+import com.bcollazo.lauraapartments.entity.Discount;
 import com.bcollazo.lauraapartments.repository.ApartmentRepository;
+import com.bcollazo.lauraapartments.repository.DiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,7 @@ import java.math.BigDecimal;
 public class DataLoader implements CommandLineRunner {
 
     private final ApartmentRepository apartmentRepository;
+    private final DiscountRepository discountRepository;
 
     @Override
     public void run(String... args) {
@@ -28,6 +31,11 @@ public class DataLoader implements CommandLineRunner {
 
                 apartmentRepository.save(apartment);
             }
+        }
+
+        if (discountRepository.count() == 0) {
+            discountRepository.save(Discount.builder().minNights(7).percentage(new BigDecimal("10")).build());
+            discountRepository.save(Discount.builder().minNights(14).percentage(new BigDecimal("15")).build());
         }
     }
 }

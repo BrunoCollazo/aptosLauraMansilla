@@ -1,4 +1,4 @@
-package com.bcollazo.lauraapartments.dto;
+package com.bcollazo.lauraapartments.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
