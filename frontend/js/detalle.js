@@ -180,8 +180,19 @@ confirmarPagoBtn.addEventListener("click", async () => {
 
     const data = await response.json();
 
-    // Redirige al gateway de pago
-    window.location.href = data.redirectUrl;
+    // Fiserv requiere un form POST con el token a pageUrl, no un redirect GET
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = data.pageUrl;
+
+    const tokenInput = document.createElement("input");
+    tokenInput.type = "hidden";
+    tokenInput.name = "token";
+    tokenInput.value = data.token;
+    form.appendChild(tokenInput);
+
+    document.body.appendChild(form);
+    form.submit();
 
   } catch (error) {
 
