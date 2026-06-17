@@ -41,6 +41,18 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
+    private String cardBrand; // e.g. "Mastercard", from payment.card.cardBrandName
+
+    private String cardMask; // e.g. "515845******0949", from payment.card.cardMask
+
+    private String authorizationCode; // from payment.authorizer.authorizationCode
+
+    private Long confirmedAmount; // amount charged per Fiserv, in cents
+
+    private String currency; // Fiserv currency code, e.g. "858"
+
+    private LocalDateTime confirmedAt; // payment.dateTime from Fiserv (when authorized/confirmed)
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

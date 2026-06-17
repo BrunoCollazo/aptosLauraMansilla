@@ -6,6 +6,7 @@ import com.bcollazo.lauraapartments.entity.Payment;
 import com.bcollazo.lauraapartments.entity.PaymentStatus;
 import com.bcollazo.lauraapartments.repository.PaymentRepository;
 import com.bcollazo.lauraapartments.service.FiservSignatureService;
+import com.bcollazo.lauraapartments.service.PaymentService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class FiservWebhookController {
 
     private final PaymentRepository paymentRepository;
     private final FiservSignatureService signatureService;
+    private final PaymentService paymentService;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -87,10 +89,8 @@ public class FiservWebhookController {
             return ResponseEntity.ok().build();
         }
 
-        // Update paymentToken if it was missing in our DB
-        if (payment.getPaymentToken() == null && paymentToken != null) {
-            payment.setPaymentToken(paymentToken);
-        }
+        // Update paymentToken/card/authorization/amount details from Fiserv's payload
+        paymentService.applyPaymentDetails(payment, payload.getPayment());
 
         // 4. Handle idempotency
         if (payment.getStatus() == PaymentStatus.PROCESSED) {

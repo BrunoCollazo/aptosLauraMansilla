@@ -157,12 +157,49 @@ public class PaymentService {
         return payment.getStatus();
     }
 
+    private static final java.time.format.DateTimeFormatter FISERV_DATE_TIME_FORMATTER =
+            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * Copies the Fiserv-reported payment details (card, authorization, confirmed amount/currency,
+     * confirmation timestamp) onto our record. Shared by the callback, sync and webhook paths so
+     * none of them silently drop data Fiserv actually sent.
+     */
+    public void applyPaymentDetails(Payment payment, FiservPaymentResultDTO.PaymentDetails details) {
+        if (details == null) {
+            return;
+        }
+        if (details.getPaymentToken() != null && payment.getPaymentToken() == null) {
+            payment.setPaymentToken(details.getPaymentToken());
+        }
+        if (details.getCard() != null) {
+            Object cardBrandName = details.getCard().get("cardBrandName");
+            Object cardMask = details.getCard().get("cardMask");
+            if (cardBrandName != null) payment.setCardBrand(cardBrandName.toString());
+            if (cardMask != null) payment.setCardMask(cardMask.toString());
+        }
+        if (details.getAuthorizer() != null) {
+            Object authorizationCode = details.getAuthorizer().get("authorizationCode");
+            if (authorizationCode != null) payment.setAuthorizationCode(authorizationCode.toString());
+        }
+        if (details.getAmount() > 0) {
+            payment.setConfirmedAmount(details.getAmount());
+        }
+        if (details.getCurrency() != null) {
+            payment.setCurrency(details.getCurrency());
+        }
+        if (details.getDateTime() != null) {
+            try {
+                payment.setConfirmedAt(LocalDateTime.parse(details.getDateTime(), FISERV_DATE_TIME_FORMATTER));
+            } catch (Exception e) {
+                log.warn("Could not parse Fiserv payment dateTime '{}': {}", details.getDateTime(), e.getMessage());
+            }
+        }
+    }
+
     private void updatePaymentFromDetails(Payment payment, FiservPaymentResultDTO.PaymentDetails details) {
         if (details != null) {
-            // Store paymentToken if received
-            if (details.getPaymentToken() != null && payment.getPaymentToken() == null) {
-                payment.setPaymentToken(details.getPaymentToken());
-            }
+            applyPaymentDetails(payment, details);
 
             if (details.isAuthorized() && "PROCESSED".equals(details.getState())) {
                 payment.setStatus(PaymentStatus.PROCESSED);
