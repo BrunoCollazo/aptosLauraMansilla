@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración – Laura Apartments</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="header">
+  <h1>Panel de Administración</h1>
+</header>
+
+<main class="admin-container">
+
+  <div class="admin-card">
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Apartamento</th>
+            <th>Disponibilidad</th>
+            <th>Precio por noche</th>
+            <th>Descuento +3 noches</th>
+            <th>Descuento +7 noches</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+          <tr>
+            <td class="admin-feedback" colspan="5">Cargando apartamentos…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script src="js/admin.js"></script>
+</body>
+</html>
