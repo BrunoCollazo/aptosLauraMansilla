@@ -64,13 +64,14 @@ public class FiservSignatureService {
             if (value == null) continue;
 
             if (value instanceof Map) {
-                sb.append(buildSignatureText((Map<String, Object>) value));
+                sb.append(sanitize(key)).append(buildSignatureText((Map<String, Object>) value));
             } else if (value instanceof List) {
+                sb.append(sanitize(key));
                 for (Object item : (List<?>) value) {
                     if (item instanceof Map) {
                         sb.append(buildSignatureText((Map<String, Object>) item));
                     } else {
-                        sb.append(key).append(sanitize(String.valueOf(item)));
+                        sb.append(sanitize(String.valueOf(item)));
                     }
                 }
             } else {

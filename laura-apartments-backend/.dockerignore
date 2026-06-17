@@ -1,0 +1,6 @@
+target/
+certs/
+.env
+.git/
+.idea/
+*.iml

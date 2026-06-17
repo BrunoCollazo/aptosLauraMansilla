@@ -31,7 +31,18 @@ public class FiservWebhookController {
 
     @Transactional
     @PostMapping
-    public ResponseEntity<Void> handleWebhook(@RequestBody FiservWebhookDTO payload) {
+    public ResponseEntity<Void> handleWebhook(@RequestBody String rawBody) {
+        FiservWebhookDTO payload;
+        Map<String, Object> payloadMap;
+        try {
+            // Parse the raw body into a Map for signature verification (faithful to what
+            // Fiserv actually sent/signed) and into the typed DTO for business logic.
+            payloadMap = objectMapper.readValue(rawBody, new TypeReference<Map<String, Object>>() {});
+            payload = objectMapper.convertValue(payloadMap, FiservWebhookDTO.class);
+        } catch (Exception e) {
+            log.warn("Could not parse Fiserv webhook payload: {}", e.getMessage());
+            return ResponseEntity.ok().build();
+        }
         log.info("Received Fiserv webhook event: {}", payload.getEvent());
 
         // 1. Validate digitalSign
@@ -41,7 +52,6 @@ public class FiservWebhookController {
                 log.warn("Missing requestHeader or digitalSign in webhook for event: {}", payload.getEvent());
                 signatureValid = false;
             } else {
-                Map<String, Object> payloadMap = objectMapper.convertValue(payload, new TypeReference<Map<String, Object>>() {});
                 signatureValid = signatureService.verifySign(payloadMap, payload.getRequestHeader().getDigitalSign());
             }
         } catch (Exception e) {

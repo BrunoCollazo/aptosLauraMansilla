@@ -1,0 +1,155 @@
+{
+  "info": {
+    "name": "Laura Apartments Backend",
+    "_postman_id": "b1f2a4d0-0001-4a2b-9c3d-laura0001",
+    "description": "Colección para probar el backend de Laura Apartments (ambiente test desplegado en lauramansilla.com).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://lauramansilla.com" },
+    { "key": "apartmentId", "value": "1" },
+    { "key": "reference", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Apartments (Public)",
+      "item": [
+        {
+          "name": "Listar apartamentos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/apartments"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Listar apartamentos (admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/apartments"
+          }
+        },
+        {
+          "name": "Actualizar disponibilidad",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/apartments/{{apartmentId}}/availability?available=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "apartments", "{{apartmentId}}", "availability"],
+              "query": [{ "key": "available", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "Actualizar precio",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/apartments/{{apartmentId}}/price?price=3000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "apartments", "{{apartmentId}}", "price"],
+              "query": [{ "key": "price", "value": "3000" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Crear pago (inicia flujo Fiserv)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('reference', body.reference);",
+                  "  console.log('pageUrl:', body.pageUrl);",
+                  "  console.log('token:', body.token);",
+                  "  console.log('reference guardado:', body.reference);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartmentId\": {{apartmentId}},\n  \"nights\": 3,\n  \"clientEmail\": \"cliente.prueba@example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/api/payments",
+            "description": "Crea un Payment en estado PENDING y devuelve pageUrl + token de Fiserv. Para completar el pago hay que abrir manualmente `pageUrl` en el navegador y enviarle el `token` (form POST), ya que la página de Fiserv requiere interacción humana con tarjeta de prueba."
+          }
+        },
+        {
+          "name": "Sincronizar estado de pago",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/payments/{{reference}}/sync",
+            "description": "Usa el `reference` devuelto por 'Crear pago'. Consulta directamente a Fiserv si el callback no llegó todavía."
+          }
+        },
+        {
+          "name": "[Referencia] Callback de Fiserv",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "data",
+                  "value": "{\"responseHeader\":{\"responseCode\":\"00\",\"digitalSign\":\"FIRMA_DE_FISERV\"},\"reference\":\"{{reference}}\",\"payment\":{\"paymentToken\":\"abc123\",\"accessToken\":\"token123\",\"state\":\"PROCESSED\",\"authorized\":true}}"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/payments/callback",
+            "description": "NO se puede probar manualmente con datos inventados: requiere `digitalSign` válido firmado con la clave privada de Fiserv, que solo Fiserv tiene. Se deja como referencia de la forma del payload. Se dispara solo cuando el cliente termina de pagar en la página real de Fiserv."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fiserv (Internal / Reference)",
+      "item": [
+        {
+          "name": "[Referencia] Webhook de Fiserv",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"PAYMENT\",\n  \"requestHeader\": {\n    \"netId\": \"LAURA_MANSILLA_TEST\",\n    \"digitalSign\": \"FIRMA_DE_FISERV\"\n  },\n  \"payment\": {\n    \"paymentToken\": \"abc123\",\n    \"accessToken\": \"token123\",\n    \"state\": \"PROCESSED\",\n    \"authorized\": true\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/fiserv/webhook",
+            "description": "NO se puede probar manualmente: requiere `digitalSign` firmado por Fiserv (clave privada de ellos). Siempre responde 200 aunque la firma sea inválida (a propósito, así Fiserv no reintenta). Útil para ver en los logs del backend (`docker logs laura-api`) si el webhook real llega y por qué se rechaza, si pasara."
+          }
+        },
+        {
+          "name": "[Referencia] EchoTest de Fiserv",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestHeader\": {\n    \"netId\": \"LAURA_MANSILLA_TEST\",\n    \"digitalSign\": \"FIRMA_DE_FISERV\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/fiserv/echoTest",
+            "description": "Este endpoint lo llama Fiserv periódicamente para verificar que estamos vivos. Podés probarlo igual sin firma válida: el backend solo loguea una advertencia si la firma no valida, pero responde 200 con su propia firma generada."
+          }
+        }
+      ]
+    }
+  ]
+}

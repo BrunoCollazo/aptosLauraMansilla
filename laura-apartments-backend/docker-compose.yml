@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16
+    container_name: laura-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: laura
+    volumes:
+      - laura-db-data:/var/lib/postgresql/data
+    networks:
+      - laura-net
+
+  api:
+    build: .
+    container_name: laura-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/laura
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./certs:/app/certs:ro
+    depends_on:
+      - db
+    networks:
+      - laura-net
+
+networks:
+  laura-net:
+
+volumes:
+  laura-db-data:

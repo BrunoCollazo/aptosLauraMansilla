@@ -1,11 +1,9 @@
 package com.bcollazo.lauraapartments.controller;
 
-import com.bcollazo.lauraapartments.dto.response.FiservPaymentResultDTO;
 import com.bcollazo.lauraapartments.dto.request.PaymentRequestDTO;
 import com.bcollazo.lauraapartments.dto.response.PaymentResponseDTO;
 import com.bcollazo.lauraapartments.entity.PaymentStatus;
 import com.bcollazo.lauraapartments.service.PaymentService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +20,6 @@ import java.net.URI;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final ObjectMapper objectMapper;
 
     @PostMapping
     public ResponseEntity<PaymentResponseDTO> createPayment(@Valid @RequestBody PaymentRequestDTO requestDTO) {
@@ -34,8 +31,7 @@ public class PaymentController {
     public ResponseEntity<Void> paymentCallback(@RequestParam("data") String dataJson) {
         try {
             log.info("Received Fiserv callback: {}", dataJson);
-            FiservPaymentResultDTO result = objectMapper.readValue(dataJson, FiservPaymentResultDTO.class);
-            PaymentStatus status = paymentService.processCallbackResult(result);
+            PaymentStatus status = paymentService.processCallbackResult(dataJson);
 
             String redirectUrl = (status == PaymentStatus.PROCESSED)
                     ? "https://www.lauramansilla.com/payment-success"

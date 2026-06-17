@@ -59,9 +59,9 @@ public class PaymentService {
         FiservRequestDTO fiservRequest = FiservRequestDTO.builder()
                 .currency("858") // UYU
                 .amount(caratAmount)
-                .taxedAmount(caratAmount)
+                .taxedAmount(0L)
                 .taxAmount(0L)
-                .indi(6) // IVA Ley 19.210
+                .indi(0) // No devuelve impuesto
                 .reference(reference)
                 .invoice(FiservRequestDTO.Invoice.builder()
                         .number(invoiceNumber)
@@ -112,7 +112,13 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentStatus processCallbackResult(FiservPaymentResultDTO result) {
+    public PaymentStatus processCallbackResult(String dataJson) throws com.fasterxml.jackson.core.JsonProcessingException {
+        // Verify the signature against the raw JSON map, not a DTO round-trip: our DTOs
+        // don't model every field Fiserv may send, so verifying off the typed object would
+        // silently drop fields and break the signature check.
+        Map<String, Object> resultMap = objectMapper.readValue(dataJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+        FiservPaymentResultDTO result = objectMapper.convertValue(resultMap, FiservPaymentResultDTO.class);
+
         String reference = result.getReference();
         Payment payment = paymentRepository.findByReference(reference)
                 .orElseThrow(() -> new RuntimeException("Payment not found for reference: " + reference));
@@ -122,8 +128,6 @@ public class PaymentService {
             throw new RuntimeException("Missing callback signature");
         }
 
-        // Verify digitalSign
-        Map<String, Object> resultMap = objectMapper.convertValue(result, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
         if (!signatureService.verifySign(resultMap, result.getResponseHeader().getDigitalSign())) {
             log.error("Invalid signature in callback for reference: {}", reference);
             throw new RuntimeException("Invalid callback signature");
@@ -164,6 +168,10 @@ public class PaymentService {
                 payment.setStatus(PaymentStatus.PROCESSED);
             } else if ("CANCELED".equals(details.getState())) {
                 payment.setStatus(PaymentStatus.FAILED);
+            } else if ("INPROCESS".equals(details.getState())) {
+                // Expected transient state (per Fiserv docs): payment not yet confirmed by the
+                // client, or still being processed by a collection network. Stays PENDING.
+                log.debug("Payment still INPROCESS for reference {}", payment.getReference());
             } else {
                 log.warn("Unhandled payment state '{}' for reference {}", details.getState(), payment.getReference());
             }
