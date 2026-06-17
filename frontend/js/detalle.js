@@ -95,6 +95,9 @@ lightbox.addEventListener("click", () => {
   lightbox.classList.add("hidden");
   lightboxVideo.pause();
 });
+const API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ? "http://localhost:8080"
+  : "";
 const precioPorNoche = 2500;
 const nochesSelect = document.getElementById("noches");
 const totalElement = document.getElementById("total");
@@ -159,7 +162,7 @@ confirmarPagoBtn.addEventListener("click", async () => {
 
   try {
 
-    const response = await fetch("http://localhost:8080/api/payments", {
+    const response = await fetch(`${API_BASE}/api/payments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
