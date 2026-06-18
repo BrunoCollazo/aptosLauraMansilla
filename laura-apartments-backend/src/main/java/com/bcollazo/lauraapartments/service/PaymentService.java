@@ -48,10 +48,15 @@ public class PaymentService {
             throw new RuntimeException("Apartment is not available for rental");
         }
 
-        BigDecimal totalAmount = pricingService.calculateTotalAmount(
+        BigDecimal baseAmount = pricingService.calculateTotalAmount(
                 apartment.getPricePerNight(),
                 request.getNights()
         );
+
+        // El precio del apartamento es sin IVA, así que le sumamos el 10% encima.
+        // Eso es lo que paga el cliente (el IVA va sobre el precio ya con descuento).
+        BigDecimal totalAmount = baseAmount.add(baseAmount.multiply(IVA_RATE))
+                .setScale(2, RoundingMode.HALF_UP);
 
         long caratAmount = totalAmount.multiply(BigDecimal.valueOf(100)).longValue();
         String reference = UUID.randomUUID().toString();
@@ -148,6 +153,10 @@ public class PaymentService {
     private static final String CURRENCY_UYU = "858";
     private static final String CURRENCY_USD = "840";
 
+    // El precio de los apartamentos es sin IVA; en producción le sumamos este 10% encima.
+    // OJO: falta que el contador confirme la tasa antes de salir a producción.
+    private static final BigDecimal IVA_RATE = new BigDecimal("0.10");
+
     // Pasa "UYU"/"USD" (o el código numérico) al código de moneda que espera Fiserv.
     private String toCurrencyCode(String currency) {
         if (currency == null) {
@@ -204,9 +213,9 @@ public class PaymentService {
                         .serial("A")
                         .address(FiservRequestDTO.Address.builder()
                                 .country("UY")
-                                .city("Montevideo")
-                                .street("General Artigas")
-                                .doorNumber("1234")
+                                .city("Castillos") // Castillos, Rocha
+                                .street("Alfredo Vigliola casi Pintos Diago")
+                                .doorNumber("S/N") // falta el número de puerta real
                                 .build())
                         .build())
                 .client(FiservRequestDTO.Client.builder()
