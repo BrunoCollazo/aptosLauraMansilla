@@ -2,6 +2,7 @@ package com.bcollazo.lauraapartments.service;
 
 import com.bcollazo.lauraapartments.config.FiservConfig;
 import com.bcollazo.lauraapartments.dto.request.FiservRequestDTO;
+import com.bcollazo.lauraapartments.dto.request.HomologationPaymentRequestDTO;
 import com.bcollazo.lauraapartments.dto.request.PaymentRequestDTO;
 import com.bcollazo.lauraapartments.dto.response.FiservPaymentResultDTO;
 import com.bcollazo.lauraapartments.dto.response.PaymentResponseDTO;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.Map;
@@ -52,43 +55,14 @@ public class PaymentService {
 
         long caratAmount = totalAmount.multiply(BigDecimal.valueOf(100)).longValue();
         String reference = UUID.randomUUID().toString();
-        String today = java.time.LocalDate.now().toString();
-        String dueDate = java.time.LocalDate.now().plusDays(request.getNights()).toString();
+        LocalDate today = LocalDate.now();
 
-        String invoiceNumber = String.valueOf(System.currentTimeMillis() % 1000000000L);
-        FiservRequestDTO fiservRequest = FiservRequestDTO.builder()
-                .currency("858") // UYU
-                .amount(caratAmount)
-                .taxedAmount(0L)
-                .taxAmount(0L)
-                .indi(0) // No devuelve impuesto
-                .reference(reference)
-                .invoice(FiservRequestDTO.Invoice.builder()
-                        .number(invoiceNumber)
-                        .totalAmount(caratAmount)
-                        .currency("858")
-                        .date(today)
-                        .dueDate(dueDate)
-                        .description("Apartment Rental: " + apartment.getName())
-                        .finalConsumer(true)
-                        .serial("A")
-                        .address(FiservRequestDTO.Address.builder()
-                                .country("UY")
-                                .city("Montevideo")
-                                .street("General Artigas")
-                                .doorNumber("1234")
-                                .build())
-                        .build())
-                .client(FiservRequestDTO.Client.builder()
-                        .clientIdType("EMAIL")
-                        .clientId(request.getClientEmail())
-                        .email(request.getClientEmail())
-                        .build())
-                .config(FiservRequestDTO.Config.builder()
-                        .callbackUrl(fiservConfig.getCallbackUrlCode())
-                        .useRedirect(true)
-                        .build())
-                .build();
+        // Flujo normal: siempre en pesos y sin devolución de impuestos.
+        FiservRequestDTO fiservRequest = buildFiservRequest(
+                caratAmount, CURRENCY_UYU, 0, 0L, 0L, reference,
+                "Apartment Rental: " + apartment.getName(),
+                request.getClientEmail(),
+                today, today.plusDays(request.getNights()));
 
         String token = fiservClient.initiatePayment(fiservRequest);
 
@@ -108,6 +82,142 @@ public class PaymentService {
                 .pageUrl(fiservConfig.getPageUrl())
                 .token(token)
                 .reference(reference)
+                .build();
+    }
+
+    // Dispara un pago con monto, moneda e indi a mano. Solo para la homologación: nos deja
+    // mandar los montos exactos de la planilla, probar dólares y las leyes de devolución de
+    // impuestos. El desglose del IVA se calcula solo cuando indi > 0.
+    @Transactional
+    public PaymentResponseDTO createHomologationPayment(HomologationPaymentRequestDTO request) {
+        String currency = toCurrencyCode(request.getCurrency());
+        int indi = request.getIndi() != null ? request.getIndi() : 0;
+        BigDecimal amount = request.getAmount();
+        String email = request.getClientEmail() != null
+                ? request.getClientEmail()
+                : "homologacion@lauramansilla.com";
+
+        long caratAmount = amount.multiply(BigDecimal.valueOf(100)).longValue();
+        long[] tax = computeTaxBreakdown(caratAmount, indi);
+        String reference = UUID.randomUUID().toString();
+        LocalDate today = LocalDate.now();
+
+        FiservRequestDTO fiservRequest = buildFiservRequest(
+                caratAmount, currency, indi, tax[0], tax[1], reference,
+                "Homologation transaction", email, today, today.plusDays(1));
+
+        String token = fiservClient.initiatePayment(fiservRequest);
+
+        Payment payment = Payment.builder()
+                .totalAmount(amount)
+                .clientEmail(email)
+                .status(PaymentStatus.PENDING)
+                .fiservToken(token)
+                .reference(reference)
+                .build();
+
+        paymentRepository.save(payment);
+
+        log.info("Homologation payment created: reference={}, amount={} {}, indi={}, token={}",
+                reference, amount, currency, indi, token);
+
+        return PaymentResponseDTO.builder()
+                .pageUrl(fiservConfig.getPageUrl())
+                .token(token)
+                .reference(reference)
+                .build();
+    }
+
+    // Anula un pago en Fiserv y, si sale bien, lo deja como VOIDED.
+    @Transactional
+    public PaymentStatus voidPayment(String reference) {
+        Payment payment = paymentRepository.findByReference(reference)
+                .orElseThrow(() -> new RuntimeException("Payment not found for reference: " + reference));
+
+        boolean voided = fiservClient.voidPayment(payment.getFiservToken());
+        if (voided) {
+            payment.setStatus(PaymentStatus.VOIDED);
+            paymentRepository.save(payment);
+            log.info("Payment {} voided in Fiserv", reference);
+        } else {
+            log.warn("Fiserv void failed for reference {}", reference);
+        }
+        return payment.getStatus();
+    }
+
+    private static final String CURRENCY_UYU = "858";
+    private static final String CURRENCY_USD = "840";
+
+    // Pasa "UYU"/"USD" (o el código numérico) al código de moneda que espera Fiserv.
+    private String toCurrencyCode(String currency) {
+        if (currency == null) {
+            return CURRENCY_UYU;
+        }
+        switch (currency.trim().toUpperCase()) {
+            case "UYU":
+            case "858":
+                return CURRENCY_UYU;
+            case "USD":
+            case "840":
+                return CURRENCY_USD;
+            default:
+                throw new IllegalArgumentException("Unsupported currency: " + currency);
+        }
+    }
+
+    // Saca el desglose del IVA (22%) que pide Fiserv cuando hay devolución de impuestos.
+    // Asumimos que el monto ya trae el IVA adentro: base = monto / 1.22, iva = monto - base.
+    // Devuelve {taxedAmount, taxAmount} en centavos (o {0,0} si no hay devolución).
+    private long[] computeTaxBreakdown(long amountCents, int indi) {
+        if (indi == 0) {
+            return new long[]{0L, 0L};
+        }
+        long taxedAmount = BigDecimal.valueOf(amountCents)
+                .divide(BigDecimal.valueOf(1.22), 0, RoundingMode.HALF_UP)
+                .longValue();
+        long taxAmount = amountCents - taxedAmount;
+        return new long[]{taxedAmount, taxAmount};
+    }
+
+    // Arma el request de pago para Fiserv. Lo comparten el flujo normal y el de homologación;
+    // cambia el monto, la moneda, el indi y los datos de la factura, el resto es igual.
+    private FiservRequestDTO buildFiservRequest(long caratAmount, String currency, int indi,
+                                                long taxedAmount, long taxAmount, String reference,
+                                                String description, String clientEmail,
+                                                LocalDate date, LocalDate dueDate) {
+        String invoiceNumber = String.valueOf(System.currentTimeMillis() % 1000000000L);
+        return FiservRequestDTO.builder()
+                .currency(currency)
+                .amount(caratAmount)
+                .taxedAmount(taxedAmount)
+                .taxAmount(taxAmount)
+                .indi(indi)
+                .reference(reference)
+                .invoice(FiservRequestDTO.Invoice.builder()
+                        .number(invoiceNumber)
+                        .totalAmount(caratAmount)
+                        .currency(currency)
+                        .date(date.toString())
+                        .dueDate(dueDate.toString())
+                        .description(description)
+                        .finalConsumer(true)
+                        .serial("A")
+                        .address(FiservRequestDTO.Address.builder()
+                                .country("UY")
+                                .city("Montevideo")
+                                .street("General Artigas")
+                                .doorNumber("1234")
+                                .build())
+                        .build())
+                .client(FiservRequestDTO.Client.builder()
+                        .clientIdType("EMAIL")
+                        .clientId(clientEmail)
+                        .email(clientEmail)
+                        .build())
+                .config(FiservRequestDTO.Config.builder()
+                        .callbackUrl(fiservConfig.getCallbackUrlCode())
+                        .useRedirect(true)
+                        .build())
                 .build();
     }
 
