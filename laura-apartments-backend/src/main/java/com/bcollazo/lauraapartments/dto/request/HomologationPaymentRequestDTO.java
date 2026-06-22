@@ -20,8 +20,13 @@ public class HomologationPaymentRequestDTO {
     // "UYU"/"858" o "USD"/"840". Si viene vacío, va en pesos.
     private String currency;
 
-    // indi de Fiserv: 0 = sin devolución, 6 = Ley 19210 (IVA). Si es mayor a 0
-    // calculamos solo el desglose del IVA.
+    // indi de Fiserv (indicador de devolución de impuestos), valores que confirmó Rodrigo:
+    //   0 = no devuelve IVA
+    //   1 = IVA restaurantes, Ley 17.934
+    //   2 = IMESI
+    //   4 = impuestos Ley 18.999
+    //   6 = IVA Ley 19.210   ← el que usamos en producción (alquiler de apartamentos)
+    // OJO: el desglose de PaymentService asume IVA 22%, sirve para 1 y 6 pero NO para 2/4.
     private Integer indi;
 
     @Email(message = "Invalid email format")

@@ -177,6 +177,8 @@ public class PaymentService {
     // Saca el desglose del IVA (22%) que pide Fiserv cuando hay devolución de impuestos.
     // Asumimos que el monto ya trae el IVA adentro: base = monto / 1.22, iva = monto - base.
     // Devuelve {taxedAmount, taxAmount} en centavos (o {0,0} si no hay devolución).
+    // OJO: el 22% vale para los indi de IVA (1 Ley 17.934 y 6 Ley 19.210). Para IMESI (indi 2)
+    // o Ley 18.999 (indi 4) el impuesto no es 22% — si hay que homologarlos, ajustar acá.
     private long[] computeTaxBreakdown(long amountCents, int indi) {
         if (indi == 0) {
             return new long[]{0L, 0L};
@@ -215,7 +217,9 @@ public class PaymentService {
                                 .country("UY")
                                 .city("Castillos") // Castillos, Rocha
                                 .street("Alfredo Vigliola casi Pintos Diago")
-                                .doorNumber("S/N") // falta el número de puerta real
+                                // Fiserv revienta la pagina hosted con "S/N" (la barra / no le gusta y no
+                                // es numerico) -> IF99. Va "0" de placeholder hasta tener el numero real.
+                                .doorNumber("0")
                                 .build())
                         .build())
                 .client(FiservRequestDTO.Client.builder()
@@ -320,8 +324,11 @@ public class PaymentService {
         if (details != null) {
             applyPaymentDetails(payment, details);
 
-            if (details.isAuthorized() && "PROCESSED".equals(details.getState())) {
-                payment.setStatus(PaymentStatus.PROCESSED);
+            if ("PROCESSED".equals(details.getState())) {
+                // OJO: cuando la financiera rechaza (ej. fondos insuficientes) Fiserv igual
+                // manda state=PROCESSED pero con authorized=false. Sin esto el pago quedaba
+                // colgado en PENDING para siempre. authorized=true -> PROCESSED, false -> FAILED.
+                payment.setStatus(details.isAuthorized() ? PaymentStatus.PROCESSED : PaymentStatus.FAILED);
             } else if ("CANCELED".equals(details.getState())) {
                 payment.setStatus(PaymentStatus.FAILED);
             } else if ("INPROCESS".equals(details.getState())) {

@@ -12,6 +12,9 @@ target/
 *.pem
 *.key
 
+### Homologación (tokens/referencias de Fiserv) ###
+scripts/homologacion-out/
+
 ### Internal docs (not pushed) ###
 *.md
 !README.md
