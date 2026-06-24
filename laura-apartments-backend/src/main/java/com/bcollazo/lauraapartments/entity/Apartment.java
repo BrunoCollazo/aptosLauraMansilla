@@ -28,4 +28,13 @@ public class Apartment {
     private boolean available;
 
     private BigDecimal pricePerNight;
+
+    // Descuentos por apartamento. Cada uno aplica solo si su umbral de noches y su valor están
+    // seteados (> 0). Si una estadía califica para los dos, se aplica el que más conviene al
+    // cliente (mayor descuento), nunca se suman. Ver PricingService.
+    private BigDecimal percentDiscount;          // % off (ej: 10 = 10%)
+    private Integer percentDiscountMinNights;    // noches mínimas para el descuento %
+
+    private BigDecimal amountDiscount;           // monto fijo off del total de la reserva
+    private Integer amountDiscountMinNights;     // noches mínimas para el descuento de monto fijo
 }

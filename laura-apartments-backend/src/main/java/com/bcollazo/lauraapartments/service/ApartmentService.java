@@ -31,9 +31,7 @@ public class ApartmentService {
         Apartment apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new RuntimeException("Apartment not found"));
 
-        QuoteResponseDTO quote = pricingService.calculateQuote(apartment.getPricePerNight(), nights);
-        quote.setApartmentId(apartment.getId());
-        return quote;
+        return pricingService.calculateQuote(apartment, nights);
     }
 
     private ApartmentResponseDTO mapToDTO(Apartment apartment) {
