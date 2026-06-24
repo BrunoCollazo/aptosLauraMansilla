@@ -18,8 +18,8 @@ public class QuoteResponseDTO {
     private BigDecimal pricePerNight;
     private int nights;
     private BigDecimal baseAmount;          // precio x noches, sin descuento
-    private BigDecimal discountPercentage;  // % aplicado (0 si no califica)
-    private BigDecimal discountAmount;      // cuánto se descontó
+    private String discountType;            // NONE | PERCENT | AMOUNT (cuál se aplicó)
+    private BigDecimal discountAmount;      // cuánto se descontó (0 si ninguno)
     private BigDecimal subtotal;            // base - descuento (sin IVA)
     private BigDecimal ivaRate;             // tasa de IVA aplicada
     private BigDecimal ivaAmount;           // IVA sobre el subtotal

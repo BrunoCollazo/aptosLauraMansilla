@@ -50,10 +50,8 @@ public class PaymentService {
 
         // Mismo cálculo que muestra el endpoint de cotización: subtotal con descuento + 10% IVA.
         // Así lo que ve el cliente en el front y lo que cobramos acá salen de un solo lugar.
-        BigDecimal totalAmount = pricingService.calculateQuote(
-                apartment.getPricePerNight(),
-                request.getNights()
-        ).getTotal();
+        BigDecimal totalAmount = pricingService.calculateQuote(apartment, request.getNights())
+                .getTotal();
 
         long caratAmount = totalAmount.multiply(BigDecimal.valueOf(100)).longValue();
         String reference = UUID.randomUUID().toString();
