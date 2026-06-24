@@ -4,31 +4,41 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Apartamentos Laura Mansilla</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
+<body class="public">
 
-  <header class="header">
-    <h1>Apartamentos Laura Mansilla</h1>
+  <header class="public-hero">
+    <div class="public-hero__overlay"></div>
+    <div class="public-hero__content">
+      <p class="public-hero__eyebrow">Castillos, Rocha — Uruguay</p>
+      <h1>Apartamentos Laura Mansilla</h1>
+      <p class="public-hero__subtitle">
+        Tu lugar en la ciudad. Cuatro apartamentos cómodos y totalmente equipados.
+      </p>
+    </div>
   </header>
 
-<main class="container">
+  <main class="public-container">
 
-  <section class="apartment-card">
-    <img src="assets/images/Fachada.jpg" alt="Apartamento">
-    <h2>Apartamentos Laura Mansilla</h2>
-    <p>4 apartamentos, cómodos y totalmente equipados.</p>
+    <section class="apartments">
+      <h2 class="apartments__title">Elegí tu apartamento</h2>
+      <p class="apartments__lead">
+        Reservá la cantidad de noches que necesites. El precio ya incluye impuestos.
+      </p>
 
-    <a href="detalle.html" class="btn">
-      Ver detalles y pagar
-    </a>
-  </section>
+      <div id="apartmentsGrid" class="apartments-grid">
+        <p class="public-feedback">Cargando apartamentos…</p>
+      </div>
+    </section>
 
-</main>
+  </main>
 
-
-  <footer class="footer">
-    <p>© 2026 – Todos los derechos reservados</p>
+  <footer class="public-footer">
+    <p>© 2026 Apartamentos Laura Mansilla — Todos los derechos reservados</p>
     <p><a href="admin.html">Panel de administración</a></p>
   </footer>
 

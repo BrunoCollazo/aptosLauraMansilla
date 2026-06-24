@@ -1,23 +1,17 @@
-const selector = document.getElementById("opcion");
 const titulo = document.getElementById("titulo");
 const descripcion = document.getElementById("descripcion");
+const precioNocheEl = document.getElementById("precioNoche");
+
+// Qué apartamento se está mostrando: viene del ?id=N de la URL (lo pasa el index). Sin id
+// caemos al 1 así la página nunca queda vacía.
+const apartmentId = parseInt(new URLSearchParams(window.location.search).get("id")) || 1;
 
 const descripciones = {
-  1: "Apartamento cómodo con cama individual y sofa cama de plaza y media.",
-  2: "Apartamento para dos personas con Sommier de 2 plazas",
-  3: "Apartamento para dos personas con Sommier de 2 plazas",
-  4: "Apartamento amplio con Sommier de 2 plazas y 2 sommier individual"
+  1: "Apartamento cómodo con cama individual y sofá cama de plaza y media.",
+  2: "Apartamento para dos personas con sommier de dos plazas.",
+  3: "Apartamento para dos personas con sommier de dos plazas.",
+  4: "Apartamento amplio con sommier de dos plazas y dos camas individuales."
 };
-
-selector.addEventListener("change", () => {
-  const opcion = selector.value;
-
-  titulo.textContent = `Apartamento – Opción ${opcion}`;
-  descripcion.textContent = descripciones[opcion];
-
-  // El precio puede variar según el apartamento, así que recotizamos al cambiar.
-  if (typeof actualizarTotal === "function") actualizarTotal();
-});
 const track = document.querySelector(".carousel-track");
 const slides = Array.from(document.querySelectorAll(".slide"));
 const nextBtn = document.querySelector(".nav.next");
@@ -65,15 +59,6 @@ track.addEventListener("touchend", (e) => {
     prevBtn.click();
   }
 });
-const backTitle = document.getElementById("backTitle");
-
-backTitle.addEventListener("click", () => {
-  if (window.history.length > 1) {
-    window.history.back();
-  } else {
-    window.location.href = "index.html";
-  }
-});
 const lightbox = document.getElementById("lightbox");
 const lightboxImg = document.getElementById("lightbox-img");
 const lightboxVideo = document.getElementById("lightbox-video");
@@ -110,7 +95,6 @@ const btnPago = document.getElementById("btnPago");
 let quoteSeq = 0;
 async function actualizarTotal() {
   const noches = parseInt(nochesSelect.value);
-  const apartmentId = parseInt(selector.value);
 
   if (isNaN(noches) || noches < 1) {
     totalElement.textContent = "$0";
@@ -127,12 +111,35 @@ async function actualizarTotal() {
     if (seq !== quoteSeq) return;
 
     totalElement.textContent = `$${Number(quote.total).toLocaleString("es-UY")}`;
+    // De paso aprovechamos el precio por noche que devuelve el quote.
+    precioNocheEl.textContent = `$${Number(quote.pricePerNight).toLocaleString("es-UY")}`;
   } catch (error) {
     if (seq !== quoteSeq) return;
     console.error(error);
     totalElement.textContent = "—";
   }
 }
+
+// Título y descripción salen del id de la URL. El nombre real lo traemos del backend para
+// que coincida con lo que muestra el index; si falla, dejamos un texto genérico.
+async function cargarDatosApartamento() {
+  titulo.textContent = "Apartamento";
+  descripcion.textContent = descripciones[apartmentId] || "Apartamento equipado en Castillos, Rocha.";
+
+  try {
+    const res = await fetch(`${API_BASE}/api/apartments`);
+    if (!res.ok) return;
+    const apto = (await res.json()).find((a) => a.id === apartmentId);
+    if (apto) {
+      titulo.textContent = apto.name;
+      document.title = `${apto.name} – Laura Mansilla`;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+cargarDatosApartamento();
 
 nochesSelect.addEventListener("input", actualizarTotal);
 
@@ -165,7 +172,6 @@ confirmarPagoBtn.addEventListener("click", async () => {
   modal.classList.add("hidden");
 
   const noches = parseInt(nochesSelect.value);
-  const opcion = parseInt(selector.value);
 
   try {
 
@@ -175,7 +181,7 @@ confirmarPagoBtn.addEventListener("click", async () => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        apartmentId: opcion,
+        apartmentId: apartmentId,
         nights: noches,
         clientEmail: "cliente@test.com"
       })
