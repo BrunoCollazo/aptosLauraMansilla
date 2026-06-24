@@ -14,6 +14,9 @@ selector.addEventListener("change", () => {
 
   titulo.textContent = `Apartamento – Opción ${opcion}`;
   descripcion.textContent = descripciones[opcion];
+
+  // El precio puede variar según el apartamento, así que recotizamos al cambiar.
+  if (typeof actualizarTotal === "function") actualizarTotal();
 });
 const track = document.querySelector(".carousel-track");
 const slides = Array.from(document.querySelectorAll(".slide"));
@@ -98,39 +101,43 @@ lightbox.addEventListener("click", () => {
 const API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
   ? "http://localhost:8080"
   : "";
-const precioPorNoche = 2500;
 const nochesSelect = document.getElementById("noches");
 const totalElement = document.getElementById("total");
 const btnPago = document.getElementById("btnPago");
 
-function actualizarTotal() {
+// El total se lo pedimos al backend (precio con descuento + IVA), así lo que ve el cliente
+// es exactamente lo que se le va a cobrar. Nada de calcular precios acá en el front.
+let quoteSeq = 0;
+async function actualizarTotal() {
   const noches = parseInt(nochesSelect.value);
-  const total = noches * precioPorNoche;
+  const apartmentId = parseInt(selector.value);
 
-  totalElement.textContent = `$${total.toLocaleString("es-UY")}`;
+  if (isNaN(noches) || noches < 1) {
+    totalElement.textContent = "$0";
+    return;
+  }
+
+  // Cada pedido lleva un número; si vuelve uno viejo después de uno nuevo, lo ignoramos.
+  const seq = ++quoteSeq;
+  try {
+    const res = await fetch(`${API_BASE}/api/apartments/${apartmentId}/quote?nights=${noches}`);
+    if (!res.ok) throw new Error("No se pudo cotizar");
+
+    const quote = await res.json();
+    if (seq !== quoteSeq) return;
+
+    totalElement.textContent = `$${Number(quote.total).toLocaleString("es-UY")}`;
+  } catch (error) {
+    if (seq !== quoteSeq) return;
+    console.error(error);
+    totalElement.textContent = "—";
+  }
 }
 
 nochesSelect.addEventListener("input", actualizarTotal);
 
 // Inicializar
 actualizarTotal();
-
-btnPago.addEventListener("click", () => {
-  const noches = nochesSelect.value;
-  const opcion = selector.value;
-
-  // Más adelante acá va la redirección a Fiserv
-});
-function actualizarTotal() {
-  const noches = parseInt(nochesSelect.value);
-
-  if (!isNaN(noches) && noches > 0) {
-    const total = noches * precioPorNoche;
-    totalElement.textContent = `$${total.toLocaleString("es-UY")}`;
-  } else {
-    totalElement.textContent = "$0";
-  }
-}
 
 
 const modal = document.getElementById("legalModal");
