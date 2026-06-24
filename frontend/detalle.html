@@ -17,86 +17,102 @@
 </header>
 
 
-<main class="containerDetalle">
-
-  <!-- DETALLES -->
-  <section class="details">
-    <h2 id="titulo">Apartamento</h2>
-
-    <p id="descripcion">
-      Apartamento cómodo y equipado.
-    </p>
-    <p id="equipado">
-      Cuenta con: Smart TV, aire acondicionado, servicio de limpieza, cambio de toallas
-      y ropa de cama, baño privado.
-    </p>
-    <p class="price">
-      Precio por noche: <strong id="precioNoche">—</strong>
-    </p>
-  </section>
+<main class="detalle">
 
   <!-- GALERÍA -->
-  <section class="carousel">
+  <div class="detalle__gallery">
+    <section class="carousel">
 
-    <button class="nav prev" aria-label="Anterior">‹</button>
+      <button class="nav prev" aria-label="Anterior">‹</button>
 
-    <div class="carousel-track">
+      <div class="carousel-track">
 
-      <div class="slide">
-        <img src="assets/images/CamaConToallas.jpg" alt="Cama con toallas">
+        <div class="slide">
+          <img src="assets/images/CamaConToallas.jpg" alt="Cama con toallas">
+        </div>
+
+        <div class="slide">
+          <img src="assets/images/Fachada.jpg" alt="Fachada del apartamento">
+        </div>
+
+        <div class="slide">
+          <img src="assets/images/Cama.jpg" alt="Dormitorio">
+        </div>
+
+        <div class="slide">
+          <video controls>
+            <source src="assets/images/EntrandoDpto.mp4" type="video/mp4">
+          </video>
+        </div>
+
+        <div class="slide">
+          <video controls>
+            <source src="assets/images/PorAdentro.mp4" type="video/mp4">
+          </video>
+        </div>
+
       </div>
 
-      <div class="slide">
-        <img src="assets/images/Fachada.jpg" alt="Fachada del apartamento">
-      </div>
+      <button class="nav next" aria-label="Siguiente">›</button>
 
-      <div class="slide">
-        <img src="assets/images/Cama.jpg" alt="Dormitorio">
-      </div>
+    </section>
+  </div>
 
-      <div class="slide">
-        <video controls>
-          <source src="assets/images/EntrandoDpto.mp4" type="video/mp4">
-        </video>
-      </div>
+  <!-- INFO -->
+  <div class="detalle__info">
+    <p class="details__eyebrow">Alquiler temporario · Castillos, Rocha</p>
+    <h1 id="titulo">Apartamento</h1>
+    <p id="descripcion" class="details__desc">
+      Apartamento cómodo y equipado.
+    </p>
 
-      <div class="slide">
-        <video controls>
-          <source src="assets/images/PorAdentro.mp4" type="video/mp4">
-        </video>
-      </div>
-
+    <div class="amenities">
+      <h2 class="amenities__title">Comodidades</h2>
+      <ul class="amenities__list">
+        <li>Smart TV</li>
+        <li>Aire acondicionado</li>
+        <li>Servicio de limpieza</li>
+        <li>Cambio de toallas y ropa de cama</li>
+        <li>Baño privado</li>
+      </ul>
     </div>
-
-    <button class="nav next" aria-label="Siguiente">›</button>
-
-  </section>
+  </div>
 
   <!-- RESERVA / PAGO -->
-  <section class="booking">
+  <aside class="detalle__aside">
+    <div class="booking">
 
-    <div class="nights">
-      <label for="noches">Cantidad de noches:</label>
-      <input
-        type="number"
-        id="noches"
-        min="1"
-        max="30"
-        value="1"
-        step="1"
-      />
+      <div class="booking__price">
+        <strong id="precioNoche">—</strong>
+        <span>por noche + IVA</span>
+      </div>
+
+      <div class="nights">
+        <label for="noches">Noches</label>
+        <input
+          type="number"
+          id="noches"
+          min="1"
+          max="30"
+          value="1"
+          step="1"
+        />
+      </div>
+
+      <div class="booking__divider"></div>
+
+      <div class="booking__total">
+        <span>Total</span>
+        <strong id="total">—</strong>
+      </div>
+      <p class="total-note">Incluye impuestos.</p>
+
+      <button id="btnPago" class="btn-pago">
+        Continuar con el pago
+      </button>
+
     </div>
-
-    <div class="total">
-      Total: <strong id="total">—</strong>
-    </div>
-    <p class="total-note">Incluye impuestos.</p>
-
-    <button id="btnPago" class="btn-pago">
-      Continuar con el pago
-    </button>
-
-  </section>
+  </aside>
 
 </main>
 

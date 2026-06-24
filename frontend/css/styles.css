@@ -547,6 +547,21 @@ body.public {
   --olive: #6b7257;
   --warm-shadow: 0 12px 30px rgba(90, 60, 35, 0.10);
 
+  /* Remapeo de la paleta vieja (azul/slate) → cálida. Así el panel admin, que usa estas
+     variables y la clase .header, toma los mismos tonos sin reescribir cada regla. */
+  --color-bg: var(--bg);
+  --color-card: var(--surface);
+  --color-text: var(--ink);
+  --color-border: var(--line);
+  --color-header-bg: var(--ink);
+  --color-primary: var(--terracotta);
+  --color-primary-dark: var(--terracotta-dark);
+  --color-success: var(--olive);
+  --color-success-dark: #59604a;
+  --color-danger: #bf6a52;
+  --color-danger-dark: #a5563f;
+  --shadow-soft: var(--warm-shadow);
+
   background: var(--bg);
   color: var(--ink);
 }
@@ -772,38 +787,104 @@ body.public h3 {
   font-size: 0.95rem;
 }
 
-/* ---------- Contenido del detalle ---------- */
-body.public .containerDetalle {
-  max-width: 960px;
+/* ---------- Detalle: layout ---------- */
+.detalle {
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 3rem;
+  padding: 2rem 1.25rem 4rem;
+  display: grid;
+  gap: 1.75rem 2.5rem;
+  grid-template-columns: 1fr;
 }
 
-body.public .details h2 {
-  font-size: clamp(1.6rem, 4vw, 2.2rem);
+@media (min-width: 900px) {
+  .detalle {
+    grid-template-columns: minmax(0, 1.7fr) minmax(290px, 1fr);
+    grid-template-areas:
+      "gallery aside"
+      "info    aside";
+    align-items: start;
+  }
+
+  .detalle__gallery { grid-area: gallery; }
+  .detalle__info { grid-area: info; }
+  .detalle__aside { grid-area: aside; }
+
+  .detalle__aside .booking {
+    position: sticky;
+    top: 88px;
+  }
 }
 
-body.public #descripcion,
-body.public #equipado {
-  color: var(--muted);
-  font-size: 0.97rem;
-}
-
-body.public .price {
-  font-size: 1.1rem;
-}
-
-body.public .price strong {
-  color: var(--terracotta);
-  font-size: 1.3rem;
-}
-
+/* ---------- Detalle: galería ---------- */
 body.public .carousel {
   border-radius: 18px;
   box-shadow: var(--warm-shadow);
   background: #efe7dd;
 }
 
+/* ---------- Detalle: info ---------- */
+.details__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.78rem;
+  color: var(--terracotta);
+  margin-bottom: 0.6rem;
+}
+
+.detalle__info h1 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  margin-bottom: 0.75rem;
+}
+
+.details__desc {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 60ch;
+}
+
+.amenities {
+  margin-top: 2rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.amenities__title {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.amenities__list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem 1.5rem;
+}
+
+@media (min-width: 480px) {
+  .amenities__list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.amenities__list li {
+  position: relative;
+  padding-left: 1.7rem;
+  color: var(--ink);
+  font-size: 0.97rem;
+}
+
+.amenities__list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--terracotta);
+  font-weight: 700;
+}
+
+/* ---------- Detalle: tarjeta de reserva ---------- */
 body.public .booking {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -811,11 +892,42 @@ body.public .booking {
   padding: 1.5rem;
   box-shadow: var(--warm-shadow);
   margin-top: 0;
+  gap: 1.1rem;
+}
+
+.booking__price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.booking__price strong {
+  font-size: 1.9rem;
+  color: var(--terracotta);
+}
+
+.booking__price span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.booking .nights {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.booking .nights label {
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
 body.public .nights input {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
   border: 1px solid var(--line);
   border-radius: 10px;
+  font-size: 1rem;
 }
 
 body.public .nights input:focus {
@@ -824,21 +936,31 @@ body.public .nights input:focus {
   box-shadow: 0 0 0 3px rgba(196, 104, 63, 0.15);
 }
 
-body.public .total {
-  font-size: 1.35rem;
+.booking__divider {
+  height: 1px;
+  background: var(--line);
 }
 
-body.public .total strong {
-  color: var(--terracotta);
+.booking__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 1.05rem;
+}
+
+.booking__total strong {
+  font-size: 1.6rem;
+  color: var(--ink);
 }
 
 .total-note {
   color: var(--muted);
-  font-size: 0.85rem;
-  margin-top: -0.5rem;
+  font-size: 0.82rem;
+  margin-top: -0.4rem;
 }
 
 body.public .btn-pago {
+  width: 100%;
   background: var(--terracotta);
   border-radius: 999px;
   font-weight: 600;
@@ -849,6 +971,7 @@ body.public .btn-pago:hover {
   background: var(--terracotta-dark);
 }
 
+/* ---------- Modal legal ---------- */
 body.public .modal-content {
   border-radius: 18px;
 }
@@ -866,25 +989,83 @@ body.public .modal-content button:disabled {
   background: #c9bdb0;
 }
 
-/* Desktop: info + reserva a la izquierda, galería a la derecha ocupando alto completo. */
-@media (min-width: 768px) {
-  body.public .containerDetalle {
-    grid-template-columns: 1.1fr 1fr;
-    align-items: start;
-  }
+/* ---------- Páginas de estado de pago ---------- */
+.status {
+  min-height: 62vh;
+  display: grid;
+  place-items: center;
+  padding: 3rem 1.25rem;
+}
 
-  body.public .details {
-    grid-column: 1;
-    grid-row: 1;
-  }
+.status-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--warm-shadow);
+  padding: 2.75rem 2rem 2.5rem;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+}
 
-  body.public .booking {
-    grid-column: 1;
-    grid-row: 2;
-  }
+.status-card__badge {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 1.4rem;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
 
-  body.public .carousel {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-  }
+.status-card--success .status-card__badge {
+  background: rgba(107, 114, 87, 0.16);
+  color: var(--olive);
+}
+
+.status-card--error .status-card__badge {
+  background: rgba(196, 104, 63, 0.16);
+  color: var(--terracotta-dark);
+}
+
+.status-card h1 {
+  font-size: 1.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.status-card p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 1.6rem;
+}
+
+.status-card .btn-warm {
+  width: 100%;
+}
+
+.status-card__link {
+  display: inline-block;
+  margin-top: 0.9rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ---------- Panel admin: ajustes para la paleta cálida ---------- */
+/* Estos valores estaban hardcodeados (grises slate / anillo de foco azul), no en variables,
+   así que el remapeo de arriba no los alcanza. */
+body.public .admin-table th,
+body.public .admin-status-text,
+body.public .admin-input-symbol,
+body.public .admin-feedback {
+  color: var(--muted);
+}
+
+body.public .admin-table tbody tr:hover {
+  background: #f5efe6;
+}
+
+body.public .admin-input-group:focus-within {
+  box-shadow: 0 0 0 3px rgba(196, 104, 63, 0.12);
 }

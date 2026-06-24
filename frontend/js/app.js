@@ -37,7 +37,7 @@ function tarjetaApartamento(apto) {
       <h3 class="apt-card__name">${apto.name}</h3>
       <p class="apt-card__desc">${info.desc}</p>
       <p class="apt-card__price">
-        <strong>${formatPrecio(apto.pricePerNight)}</strong> <span>/ noche</span>
+        <strong>${formatPrecio(apto.pricePerNight)}</strong> <span>/ noche + IVA</span>
       </p>
       ${disponible
         ? `<a class="btn-warm" href="detalle.html?id=${apto.id}">Ver y reservar →</a>`
