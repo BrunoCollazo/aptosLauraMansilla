@@ -4,12 +4,21 @@ name: Deploy to OVH
 # - Backend: sincroniza el código, rebuildea la imagen y recrea el contenedor
 #   (con el workaround del KeyError de docker-compose v1).
 # - Frontend: copia selectiva de HTML/CSS/JS a nginx (sin borrar, para no pisar assets/).
-# Solo corre el job que corresponde según lo que cambió (o ambos si se dispara a mano).
+# En push a main corre solo lo que cambió. En "Run workflow" (manual) elegís qué deployar.
 
 on:
   push:
     branches: [main]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      deploy_backend:
+        description: 'Deployar backend'
+        type: boolean
+        default: true
+      deploy_frontend:
+        description: 'Deployar frontend'
+        type: boolean
+        default: true
 
 # Un deploy a la vez (evita pisadas si se acumulan pushes).
 concurrency:
@@ -20,12 +29,15 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.decide.outputs.backend }}
+      frontend: ${{ steps.decide.outputs.frontend }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      # En push: detecta qué carpeta cambió. En manual: no corre (decide usa los inputs).
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name != 'workflow_dispatch'
         with:
           filters: |
             backend:
@@ -33,12 +45,22 @@ jobs:
             frontend:
               - 'frontend/**'
 
+      - id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "backend=${{ inputs.deploy_backend }}"  >> "$GITHUB_OUTPUT"
+            echo "frontend=${{ inputs.deploy_frontend }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=${{ steps.filter.outputs.backend }}"  >> "$GITHUB_OUTPUT"
+            echo "frontend=${{ steps.filter.outputs.frontend }}" >> "$GITHUB_OUTPUT"
+          fi
+
   backend:
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configurar SSH
         run: |
@@ -84,10 +106,10 @@ jobs:
 
   frontend:
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configurar SSH
         run: |
