@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -27,7 +29,8 @@ public class ApartmentController {
 
     @GetMapping("/{id}/quote")
     public ResponseEntity<QuoteResponseDTO> getQuote(@PathVariable Long id,
+                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
                                                      @RequestParam int nights) {
-        return ResponseEntity.ok(apartmentService.getQuote(id, nights));
+        return ResponseEntity.ok(apartmentService.getQuote(id, checkIn, nights));
     }
 }

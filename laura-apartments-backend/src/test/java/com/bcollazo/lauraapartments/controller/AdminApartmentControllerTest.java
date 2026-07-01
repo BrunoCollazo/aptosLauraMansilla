@@ -44,11 +44,13 @@ public class AdminApartmentControllerTest {
         apartmentId = apt.getId();
     }
 
+    // El admin guarda todo el apartamento de una con PUT /{id} (reemplazó los PUT sueltos
+    // de /availability y /price).
     @Test
     void shouldUpdateAvailability() throws Exception {
-        mockMvc.perform(put("/api/admin/apartments/" + apartmentId + "/availability")
-                .param("available", "false")
-                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(put("/api/admin/apartments/" + apartmentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"available\":false,\"pricePerNight\":150.00}"))
                 .andExpect(status().isOk());
 
         Apartment updated = apartmentRepository.findById(apartmentId).get();
@@ -57,12 +59,12 @@ public class AdminApartmentControllerTest {
 
     @Test
     void shouldUpdatePrice() throws Exception {
-        mockMvc.perform(put("/api/admin/apartments/" + apartmentId + "/price")
-                .param("price", "200.00")
-                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(put("/api/admin/apartments/" + apartmentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"available\":true,\"pricePerNight\":200.00}"))
                 .andExpect(status().isOk());
 
         Apartment updated = apartmentRepository.findById(apartmentId).get();
-        assertEquals(new BigDecimal("200.00"), updated.getPricePerNight());
+        assertEquals(0, new BigDecimal("200.00").compareTo(updated.getPricePerNight()));
     }
 }

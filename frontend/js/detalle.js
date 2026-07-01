@@ -87,16 +87,24 @@ const API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
   ? "http://localhost:8080"
   : "";
 const nochesSelect = document.getElementById("noches");
+const checkinInput = document.getElementById("checkin");
 const totalElement = document.getElementById("total");
 const btnPago = document.getElementById("btnPago");
+
+// La fecha de entrada define la temporada (y por ende el IVA). Por defecto hoy, y no se
+// permite elegir una fecha pasada.
+const hoyISO = new Date().toISOString().slice(0, 10);
+checkinInput.min = hoyISO;
+if (!checkinInput.value) checkinInput.value = hoyISO;
 
 // El total se lo pedimos al backend (precio con descuento + IVA), así lo que ve el cliente
 // es exactamente lo que se le va a cobrar. Nada de calcular precios acá en el front.
 let quoteSeq = 0;
 async function actualizarTotal() {
   const noches = parseInt(nochesSelect.value);
+  const checkIn = checkinInput.value;
 
-  if (isNaN(noches) || noches < 1) {
+  if (isNaN(noches) || noches < 1 || !checkIn) {
     totalElement.textContent = "$0";
     return;
   }
@@ -104,7 +112,7 @@ async function actualizarTotal() {
   // Cada pedido lleva un número; si vuelve uno viejo después de uno nuevo, lo ignoramos.
   const seq = ++quoteSeq;
   try {
-    const res = await fetch(`${API_BASE}/api/apartments/${apartmentId}/quote?nights=${noches}`);
+    const res = await fetch(`${API_BASE}/api/apartments/${apartmentId}/quote?checkIn=${checkIn}&nights=${noches}`);
     if (!res.ok) throw new Error("No se pudo cotizar");
 
     const quote = await res.json();
@@ -142,6 +150,7 @@ async function cargarDatosApartamento() {
 cargarDatosApartamento();
 
 nochesSelect.addEventListener("input", actualizarTotal);
+checkinInput.addEventListener("input", actualizarTotal);
 
 // Inicializar
 actualizarTotal();
@@ -153,6 +162,12 @@ const confirmarPagoBtn = document.getElementById("confirmarPago");
 
 btnPago.addEventListener("click", () => {
   const noches = parseInt(nochesSelect.value);
+
+  if (!checkinInput.value) {
+    alert("Por favor elegí la fecha de entrada.");
+    checkinInput.focus();
+    return;
+  }
 
   if (isNaN(noches) || noches < 1) {
     alert("Por favor ingresá una cantidad válida de noches (mínimo 1).");
@@ -182,6 +197,7 @@ confirmarPagoBtn.addEventListener("click", async () => {
       },
       body: JSON.stringify({
         apartmentId: apartmentId,
+        checkIn: checkinInput.value,
         nights: noches,
         clientEmail: "cliente@test.com"
       })

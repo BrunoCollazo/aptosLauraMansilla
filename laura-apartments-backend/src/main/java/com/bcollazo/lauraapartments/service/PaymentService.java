@@ -48,26 +48,30 @@ public class PaymentService {
             throw new RuntimeException("Apartment is not available for rental");
         }
 
-        // Mismo cálculo que muestra el endpoint de cotización: subtotal con descuento + 10% IVA.
-        // Así lo que ve el cliente en el front y lo que cobramos acá salen de un solo lugar.
-        BigDecimal totalAmount = pricingService.calculateQuote(apartment, request.getNights())
+        // Mismo cálculo que muestra el endpoint de cotización: subtotal con descuento + IVA por
+        // temporada (según las fechas de la estadía). Así lo que ve el cliente en el front y lo que
+        // cobramos acá salen de un solo lugar.
+        LocalDate checkIn = request.getCheckIn();
+        BigDecimal totalAmount = pricingService.calculateQuote(apartment, checkIn, request.getNights())
                 .getTotal();
 
         long caratAmount = totalAmount.multiply(BigDecimal.valueOf(100)).longValue();
         String reference = UUID.randomUUID().toString();
         LocalDate today = LocalDate.now();
 
-        // Flujo normal: siempre en pesos y sin devolución de impuestos.
+        // Flujo normal: siempre en pesos y sin devolución de impuestos. La factura lleva las
+        // fechas de la estadía (entrada -> salida).
         FiservRequestDTO fiservRequest = buildFiservRequest(
                 caratAmount, CURRENCY_UYU, 0, 0L, 0L, reference,
                 "Apartment Rental: " + apartment.getName(),
                 request.getClientEmail(),
-                today, today.plusDays(request.getNights()));
+                today, checkIn.plusDays(request.getNights()));
 
         String token = fiservClient.initiatePayment(fiservRequest);
 
         Payment payment = Payment.builder()
                 .apartment(apartment)
+                .checkIn(checkIn)
                 .nights(request.getNights())
                 .totalAmount(totalAmount)
                 .clientEmail(request.getClientEmail())

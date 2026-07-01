@@ -23,15 +23,18 @@ public class ApartmentService {
                 .collect(Collectors.toList());
     }
 
-    // Cotiza una estadía para que el front muestre el total real (con descuento e IVA).
-    public QuoteResponseDTO getQuote(Long apartmentId, int nights) {
+    // Cotiza una estadía para que el front muestre el total real (con descuento e IVA por temporada).
+    public QuoteResponseDTO getQuote(Long apartmentId, java.time.LocalDate checkIn, int nights) {
         if (nights < 1) {
             throw new IllegalArgumentException("nights must be at least 1");
+        }
+        if (checkIn == null) {
+            throw new IllegalArgumentException("checkIn is required");
         }
         Apartment apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new RuntimeException("Apartment not found"));
 
-        return pricingService.calculateQuote(apartment, nights);
+        return pricingService.calculateQuote(apartment, checkIn, nights);
     }
 
     private ApartmentResponseDTO mapToDTO(Apartment apartment) {

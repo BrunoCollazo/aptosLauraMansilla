@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,6 +25,8 @@ public class Payment {
     @ManyToOne
     @JoinColumn(name = "apartment_id")
     private Apartment apartment;
+
+    private LocalDate checkIn; // fecha de entrada de la estadía (define la temporada / IVA)
 
     private Integer nights;
 
