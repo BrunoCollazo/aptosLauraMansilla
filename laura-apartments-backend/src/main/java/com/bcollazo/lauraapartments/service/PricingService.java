@@ -1,5 +1,6 @@
 package com.bcollazo.lauraapartments.service;
 
+import com.bcollazo.lauraapartments.dto.response.IvaStatusDTO;
 import com.bcollazo.lauraapartments.dto.response.QuoteResponseDTO;
 import com.bcollazo.lauraapartments.entity.Apartment;
 import org.springframework.stereotype.Service;
@@ -79,6 +80,37 @@ public class PricingService {
             }
         }
         return count;
+    }
+
+    // Estado del IVA para el admin: si hoy se cobra IVA y las fechas de la temporada vigente
+    // (o la próxima, si estamos fuera de temporada). Reusa la misma lógica que el cobro.
+    public IvaStatusDTO getIvaStatus(LocalDate today) {
+        boolean applying = isHighSeason(today);
+        LocalDate seasonStart;
+        LocalDate seasonEnd;
+        if (applying) {
+            LocalDate easterThisYear = easterSunday(today.getYear());
+            if (!today.isAfter(easterThisYear)) {
+                // Estamos entre el 1/ene y Pascua -> la temporada arrancó el 15/nov del año anterior.
+                seasonStart = LocalDate.of(today.getYear() - 1, 11, 15);
+                seasonEnd = easterThisYear;
+            } else {
+                // Estamos entre el 15/nov y fin de año -> termina en Pascua del año siguiente.
+                seasonStart = LocalDate.of(today.getYear(), 11, 15);
+                seasonEnd = easterSunday(today.getYear() + 1);
+            }
+        } else {
+            // Fuera de temporada (entre Pascua y el 14/nov): la próxima empieza este 15/nov.
+            seasonStart = LocalDate.of(today.getYear(), 11, 15);
+            seasonEnd = easterSunday(today.getYear() + 1);
+        }
+        return IvaStatusDTO.builder()
+                .today(today)
+                .applyingIva(applying)
+                .ivaRate(applying ? IVA_RATE : BigDecimal.ZERO)
+                .seasonStart(seasonStart)
+                .seasonEnd(seasonEnd)
+                .build();
     }
 
     // Temporada alta = del 15 de noviembre al Domingo de Pascua (inclusive), envolviendo el año

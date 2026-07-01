@@ -1,5 +1,6 @@
 package com.bcollazo.lauraapartments.service;
 
+import com.bcollazo.lauraapartments.dto.response.IvaStatusDTO;
 import com.bcollazo.lauraapartments.dto.response.QuoteResponseDTO;
 import com.bcollazo.lauraapartments.entity.Apartment;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,23 @@ class PricingServiceTest {
         assertEquals(0, q.getInSeasonNights());
         assertEquals(0, new BigDecimal("0.00").compareTo(q.getIvaAmount()));
         assertEquals(0, new BigDecimal("2000.00").compareTo(q.getTotal()));
+    }
+
+    @Test
+    void ivaStatusInSeason() {
+        IvaStatusDTO s = pricing.getIvaStatus(LocalDate.of(2026, 1, 10));
+        assertTrue(s.isApplyingIva());
+        assertEquals(LocalDate.of(2025, 11, 15), s.getSeasonStart());
+        assertEquals(LocalDate.of(2026, 4, 5), s.getSeasonEnd()); // Pascua 2026
+    }
+
+    @Test
+    void ivaStatusOffSeason() {
+        IvaStatusDTO s = pricing.getIvaStatus(LocalDate.of(2026, 7, 1));
+        assertFalse(s.isApplyingIva());
+        assertEquals(0, BigDecimal.ZERO.compareTo(s.getIvaRate()));
+        assertEquals(LocalDate.of(2026, 11, 15), s.getSeasonStart()); // próxima temporada
+        assertEquals(LocalDate.of(2027, 3, 28), s.getSeasonEnd());    // Pascua 2027
     }
 
     @Test

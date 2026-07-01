@@ -363,6 +363,25 @@ body {
   margin: 0 auto;
 }
 
+/* Cartel informativo del IVA por temporada (panel de admin) */
+.iva-banner {
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--ink);
+  margin-bottom: 1.5rem;
+}
+.iva-banner--on {
+  background: #eef1e9;                 /* verde oliva suave */
+  border-color: var(--olive);
+}
+.iva-banner--off {
+  background: #f6efe7;                 /* arena suave */
+  border-color: var(--line);
+}
+
 .admin-card {
   background: var(--color-card);
   border-radius: var(--radius-lg);

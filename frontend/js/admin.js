@@ -3,6 +3,42 @@ const API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
   : "";
 
 const container = document.getElementById("adminApartments");
+const ivaBanner = document.getElementById("ivaBanner");
+
+// Fecha ISO (YYYY-MM-DD) -> "5 de abril de 2026". Parseo por partes para no comerme un día por
+// zona horaria (new Date("2026-04-05") es UTC y puede correrse).
+function fmtFecha(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("es-UY", {
+    day: "numeric", month: "long", year: "numeric",
+  });
+}
+
+// Cartel: le avisa a Laura si hoy se cobra IVA y cuándo cambia. El estado lo calcula el backend
+// (misma lógica que el cobro), así no duplicamos las fechas de temporada acá.
+async function cargarEstadoIva() {
+  try {
+    const res = await fetch(`${API_BASE}/api/iva-status`);
+    if (!res.ok) return;
+    const s = await res.json();
+
+    if (s.applyingIva) {
+      ivaBanner.className = "iva-banner iva-banner--on";
+      ivaBanner.innerHTML =
+        `<strong>Se está cobrando IVA (10%).</strong> Estás en temporada alta. ` +
+        `El IVA se aplica hasta el <strong>${fmtFecha(s.seasonEnd)}</strong> (Domingo de Pascua); ` +
+        `después los alquileres quedan exonerados hasta el próximo 15 de noviembre.`;
+    } else {
+      ivaBanner.className = "iva-banner iva-banner--off";
+      ivaBanner.innerHTML =
+        `<strong>No se está cobrando IVA (temporada baja).</strong> Los alquileres están exonerados. ` +
+        `El IVA (10%) vuelve a aplicarse el <strong>${fmtFecha(s.seasonStart)}</strong> (inicio de temporada).`;
+    }
+    ivaBanner.hidden = false;
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 async function cargarApartamentos() {
   try {
@@ -175,4 +211,5 @@ async function guardar(card, btn) {
   }
 }
 
+cargarEstadoIva();
 cargarApartamentos();
