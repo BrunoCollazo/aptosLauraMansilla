@@ -1,0 +1,488 @@
+.hide {
+	display: none;
+}
+
+.paymentInfo h3 {
+	font-family: Georgia, 'Times New Roman', serif;
+	margin-bottom: 20px;
+}
+
+.paymentInfo .action-buttons {
+	float: right;
+	width: 100%;
+}
+
+.paymentInfo .action-buttons p {
+	text-align: center;
+}
+
+.paymentInfo .validationMessage {
+	height: 10px;
+	width: 100%;
+	text-align: center;
+    margin-bottom: 10px;
+    text-align: center; 
+    margin-top: 5px;
+}
+
+.paymentInfo .validationMessage span {
+	margin: 0px;
+}
+
+.paymentInfo .section-title {
+	color: #999;
+	align-content: center;
+	text-align: center; 
+}
+
+.paymentInfo .section-title.bold {
+	font-weight: bold;
+}
+
+.paymentInfo .section-title.bold.disc-message {
+	color: #101010;
+    align-content: center;
+	text-align: center;
+}
+
+.paymentInfo .extra-information {
+    font-size: 11px;
+    font-weight: bold;
+    color: #999;
+    align-content: center;
+	text-align: center; 
+}
+
+.btn-big{
+	min-width: unset;
+	width: 49%;
+	height: 40px;
+	font-weight: bold;
+	border-radius: 3px !important;
+}
+
+.btn-smll {
+	min-width: 80px;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 5px;
+    border-radius: 3px !important;
+}
+
+/***********************/
+/* Invoice information */
+/***********************/
+
+.paymentInfo .invoice-information {
+    float: right;
+    margin-top: 8px;
+}
+
+.paymentInfo .invoice-information .invoice-amount {
+	font-weight: bold;
+    font-size: 17px;
+    margin-top: 2px;
+    margin-left: 2px;
+}
+
+.paymentInfo .invoice-information .dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.paymentInfo .invoice-information .dropdown a {
+	color: #666;
+}
+
+.paymentInfo .invoice-information .dropdown-menu {
+    background-color: #f9f9f9;
+	padding: 0px;
+	min-width: 250px;
+}
+
+.paymentInfo .delete-icon {
+	color: #F1948A;
+    font-size: 13px;
+}
+
+.paymentInfo .delete-icon:hover {
+	color: #E74C3C;
+}
+
+.paymentInfo .invoice-information .cart-icon, .invoice-amount, .menu-icon {
+	float: left;
+	margin-right: 5px;	
+}
+
+.paymentInfo .invoice-information .dropdown-menu .invoice-title {
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+    background-color: white;
+    border-radius: inherit;
+}    
+  
+.paymentInfo .invoice-information .dropdown-menu .invoice-title h3 {
+	margin: 0px;
+	font-size: 14px;
+    font-weight: bold;
+}  
+
+.paymentInfo .invoice-information .dropdown-menu .invoice-subtitle p {
+	margin: 3px 5px;
+    font-size: 11px;
+    text-align: center;
+    /* background-color: aliceblue; */
+    border-bottom: 1px solid #E6E6E6;
+    border-top: 1px solid #E6E6E6;
+}  
+
+.paymentInfo .invoice-information .dropdown-menu .invoice-lines {
+	margin: 5px;
+}
+
+.paymentInfo .invoice-information .dropdown-menu .invoice-line {
+    width: 100%;
+    float: left;
+    height: 30px;
+    line-height: 30px;
+    font-size: 12px;
+}
+
+.paymentInfo .invoice-information .dropdown-menu .total-line {
+	font-weight: bold;
+}
+
+.paymentInfo .invoice-information .dropdown-menu .invoice-line .line-description {
+	float: left;
+}
+
+.paymentInfo .invoice-information .dropdown-menu .invoice-line .line-amount {
+	float: right;
+}
+	
+.paymentInfo .cart-icon {
+	margin-top: 1px;
+    font-size: 16px;
+}
+
+.paymentInfo .menu-icon {
+    margin-top: 1px;
+}
+
+@media (max-width: 470px) {
+	
+	.paymentInfo .invoice-information {
+		width: 100%;
+	    margin-top: -10px;
+	    margin-bottom: 10px;
+	}
+	
+	.paymentInfo .invoice-information .dropdown {
+		float: right;
+	}
+
+}
+
+/****************************/
+/* /END Invoice information */
+/****************************/
+
+
+/********************/
+/* Paymentmode page */
+/********************/
+/* Pesta;as de eleccion de tarjeta, banco o redes */
+.paymentInfo {
+  min-width: 320px;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+}
+
+.paymentInfo section {
+  display: none;
+  padding-top: 20px;
+  padding-right: 0px;
+  padding-bottom: 20px;
+  padding-left: 0px;
+  border-top: 1px solid #ddd;
+}
+
+.paymentInfo input[name="tabs"] {
+  display: none;
+}
+
+.paymentInfo label {
+  display: inline-block;
+  margin: 0 0 -1px;
+  padding: 5px 10px;
+  font-weight: 600;
+  text-align: center;
+  color: #bbb;
+  border: 1px solid transparent;
+}
+
+.paymentInfo label:hover {
+  color: #c4683f;
+  cursor: pointer;
+}
+
+.paymentInfo input:checked + label {
+  color: #c4683f;
+  border: 1px solid #ddd;
+  border-top: 2px solid #6b7257;
+  border-bottom: 1px solid #fff;
+}
+
+#tabCards:checked ~ #cards,
+#tabBanks:checked ~ #banks,
+#tabNets:checked ~ #nets{
+  display: block;
+}
+/* /END Pesta;as de eleccion de tarjeta, banco o redes */
+
+#selectPaymentmode {
+	margin-top: 15px;
+}
+
+.paymentInfo #selectPaymentmode .section-title {
+	
+}
+
+.paymentInfo .card-quotas {
+	width: 100%; 
+	margin-top: 15px;
+}
+
+.paymentInfo .rowSelected td {
+	background-color: #F2F4F4;
+	color: #6b7257;
+	font-weight: bold;
+}
+
+.paymentInfo .user-cards table table tr.rowDisabled:hover {
+	background-color: transparent !important;
+}
+
+.paymentInfo .rowDisabled td {
+	color: red !important;
+	cursor: default;
+}
+
+.paymentInfo .rowDisabled td:hover {
+	background-color: transparent !important;
+}
+
+.paymentInfo .card-quotas .section-title {
+	width: 100%; 
+	text-align: center; 
+	line-height: 29px; 
+	float: left; 
+	margin-bottom: 0px;
+}
+
+.paymentInfo .card-quotas select {
+	width: 65px; 
+	display: initial; 
+	margin-left: 20px; 
+	height: 30px;
+}
+
+.paymentInfo #cards .action-buttons {
+	margin-top: 15px;
+}
+
+.paymentInfo .user-cards {
+	overflow-y: hidden;
+	overflow-x: hidden;
+	max-height: 200px;
+	border-bottom: 1px solid #D6DBDF;
+	padding: 0px 0px 5px 0px;
+	clear: both;
+}
+
+.paymentInfo .user-cards table div {
+	overflow-y: auto;
+	overflow-x: hidden;
+	max-height: 150px;
+}
+
+.paymentInfo .user-cards table thead {
+	background-color: #F2F4F4;
+}
+
+.paymentInfo .user-cards table {
+	width: 100%;
+	font-size: 12px;
+}
+
+.paymentInfo .user-cards table table td, .paymentInfo .user-cards table th {
+	padding: 6px;
+/* 	text-align: center; */
+	padding: 10px 10px 10px 0px;
+	padding-left: 10px;
+}
+
+.paymentInfo .user-cards table th {
+	padding: 5px 10px 5px 20px;
+}
+
+.paymentInfo .user-cards th {
+	color: #6b7257;
+}
+
+.paymentInfo .user-cards td {
+	color: #999;
+}
+
+.paymentInfo .user-cards table table tr {
+	cursor: pointer;
+	border-bottom: 1px solid #D6DBDF;
+}
+
+.paymentInfo .user-cards table table tr:hover {
+	background-color: #E5E8E8;
+}
+
+.paymentInfo .user-cards table table {
+
+}
+
+.paymentInfo .user-cards div {
+	padding-left: 10px;
+    padding-right: 10px;
+    margin-top: 5px;
+}
+
+.paymentInfo .user-cards .no-cards-row td {
+	padding-top: 20px;
+}
+
+.paymentInfo .user-cards .no-cards-row td p {
+	text-align: center;
+}
+
+.paymentInfo button .glyphicon {
+	margin-right: 3px;
+}
+
+.add-button {
+	background-color: #F2F4F4 !important;
+    color: #6b7257 !important;
+    font-weight: 100;
+    text-decoration: underline;
+    float: right;
+}
+
+.add-button:hover {
+	background-color: #E5E8E8 !important;
+}
+
+.paymentInfo .drinkcard-cc {
+	width: 90px;
+	margin: 5px;
+}
+
+.paymentInfo .cc-selector input:checked + label {
+	border: none;
+	-webkit-filter: grayscale(0) opacity(.99);
+       -moz-filter: grayscale(0) opacity(.99);
+            filter: grayscale(0) opacity(.99);
+}
+
+.paymentInfo .drinkcard-cc{
+    -webkit-transition: all 100ms ease-in;
+       -moz-transition: all 100ms ease-in;
+            transition: all 100ms ease-in;
+    -webkit-filter: grayscale(1) opacity(.7);
+       -moz-filter: grayscale(1) opacity(.7);
+            filter: grayscale(1) opacity(.7);
+}
+
+.paymentInfo .drinkcard-cc:hover {
+    -webkit-filter: grayscale(0) opacity(.99);
+       -moz-filter: grayscale(0) opacity(.99);
+            filter: grayscale(0) opacity(.99);
+}
+
+.paymentInfo .cc-selector {
+	text-align: left;
+}
+
+
+/*************************/
+/* /END Paymentmode page */
+/*************************/
+
+
+/****************************/
+/* Payment Information page */
+/****************************/
+.paymentInfo #payment-information #authorizationCode form .authCode {
+	margin: 0px auto;
+    text-align: center;
+    width: 150px;
+	margin-top: 30px;
+}
+
+.paymentInfo #payment-information .cvv-input {
+	display: inline-block;
+}
+
+.paymentInfo #payment-information .cvv-input input {
+	height: 35px !important;
+}
+
+.paymentInfo #payment-information .cvv-image {
+	display: inline-block;
+}
+
+.paymentInfo #payment-information .cvv-image img {
+	max-width: 60px;
+}
+
+.paymentInfo #payment-information .information-box {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.paymentInfo #payment-information .information-box table {
+	width: 100%;
+}
+
+.paymentInfo #payment-information .information-box table td {
+	padding: 10px;
+    text-align: left;
+    color: #999;
+    border-bottom: 1px solid #E6E6E6;
+    font-size: 14px;
+    padding-left: 20px;
+}
+
+.paymentInfo #payment-information .information-box table td.paymentResult {
+    text-align: center;
+    color: #999;
+    border-bottom: 1px solid #E6E6E6;
+    font-size: 16px;
+}
+
+.paymentInfo #payment-information .information-box .information-box-title {
+	font-weight: bold;
+    font-size: 13px;
+    padding-left: 10px;
+}
+
+.paymentInfo .authorizationCode ul {
+	margin-top: 20px; color: #999;
+}
+
+/*********************************/
+/* /END Payment Information page */
+/*********************************/
+
+button.addCard {
+	font-weight: bold;
+	padding-right: 12px;
+}
+
