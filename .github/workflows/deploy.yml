@@ -1,0 +1,115 @@
+name: Deploy to OVH
+
+# Deploy automático al VPS de OVH cuando se pushea a main.
+# - Backend: sincroniza el código, rebuildea la imagen y recrea el contenedor
+#   (con el workaround del KeyError de docker-compose v1).
+# - Frontend: copia selectiva de HTML/CSS/JS a nginx (sin borrar, para no pisar assets/).
+# Solo corre el job que corresponde según lo que cambió (o ambos si se dispara a mano).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Un deploy a la vez (evita pisadas si se acumulan pushes).
+concurrency:
+  group: deploy-ovh
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'laura-apartments-backend/**'
+            frontend:
+              - 'frontend/**'
+
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/id_deploy
+          echo "${{ secrets.OVH_SSH_KEY }}" > ~/.ssh/id_deploy
+          echo "${{ secrets.OVH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Sincronizar código del backend
+        env:
+          SSH: ssh -i ~/.ssh/id_deploy -o UserKnownHostsFile=~/.ssh/known_hosts
+          DEST: ${{ secrets.OVH_USER }}@${{ secrets.OVH_HOST }}:/opt/laura-apartments-backend
+        run: |
+          # src: espejo exacto (borra lo que ya no está en el repo)
+          rsync -az --delete -e "$SSH" laura-apartments-backend/src/ "$DEST/src/"
+          # archivos de build: se actualizan pero NO se borra nada del server (.env, certs/, target/ quedan intactos)
+          rsync -az -e "$SSH" \
+            laura-apartments-backend/pom.xml \
+            laura-apartments-backend/Dockerfile \
+            laura-apartments-backend/docker-compose.yml \
+            laura-apartments-backend/.dockerignore \
+            laura-apartments-backend/mvnw \
+            laura-apartments-backend/mvnw.cmd \
+            "$DEST/"
+          rsync -az -e "$SSH" laura-apartments-backend/.mvn "$DEST/"
+
+      - name: Rebuild y recreación del contenedor
+        run: |
+          ssh -i ~/.ssh/id_deploy -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "${{ secrets.OVH_USER }}@${{ secrets.OVH_HOST }}" 'bash -s' <<'REMOTE'
+          set -e
+          cd /opt/laura-apartments-backend
+          docker-compose build api
+          # workaround KeyError de compose v1: borrar el contenedor antes de recrear
+          docker rm -f laura-api 2>/dev/null || true
+          docker-compose up -d --no-build api
+          sleep 8
+          # health check contra la API (bindeada a localhost del VPS)
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/apartments || echo 000)
+          echo "GET /api/apartments -> $code"
+          test "$code" = "200"
+          REMOTE
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/null ~/.ssh/id_deploy
+          echo "${{ secrets.OVH_SSH_KEY }}" > ~/.ssh/id_deploy
+          echo "${{ secrets.OVH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Copiar frontend a nginx
+        env:
+          SSH: ssh -i ~/.ssh/id_deploy -o UserKnownHostsFile=~/.ssh/known_hosts
+          DEST: ${{ secrets.OVH_USER }}@${{ secrets.OVH_HOST }}:/var/www/lauramansilla
+        run: |
+          # HTML + css/ + js/. SIN --delete: no tocamos assets/ (imágenes/videos) que viven en el server.
+          rsync -az -e "$SSH" \
+            frontend/index.html \
+            frontend/detalle.html \
+            frontend/admin.html \
+            frontend/payment-success.html \
+            frontend/payment-failure.html \
+            "$DEST/"
+          rsync -az -e "$SSH" frontend/css frontend/js "$DEST/"
+          ssh -i ~/.ssh/id_deploy -o UserKnownHostsFile=~/.ssh/known_hosts \
+            "${{ secrets.OVH_USER }}@${{ secrets.OVH_HOST }}" \
+            'chmod -R a+rX /var/www/lauramansilla'
