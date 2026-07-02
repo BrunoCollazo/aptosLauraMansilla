@@ -25,6 +25,11 @@ public class FiservConfig {
     @Value("${FISERV_PUBLIC_CERT_PATH}") private String publicCertPath; // Fiserv's .cer for verifying responses
     @Value("${FISERV_VERSION}")          private String version;        // e.g. "3.02"
 
+    // Versión con fallback, para no repetir el default por todo FiservClient.
+    public String getVersionOrDefault() {
+        return version != null ? version : "3.02";
+    }
+
     @Bean
     public RestTemplate restTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();

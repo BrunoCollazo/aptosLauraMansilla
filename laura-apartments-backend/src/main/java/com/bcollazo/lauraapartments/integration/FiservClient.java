@@ -42,7 +42,7 @@ public class FiservClient {
 
         requestDTO.setRequestHeader(FiservRequestDTO.RequestHeader.builder()
                 .netId(config.getNetId())
-                .version(config.getVersion() != null ? config.getVersion() : "3.02")
+                .version(config.getVersionOrDefault())
                 .auditNumber(auditNumber)
                 .dateTime(dateTime)
                 .build());
@@ -84,38 +84,12 @@ public class FiservClient {
     }
 
     public Optional<FiservPaymentResultDTO.PaymentDetails> queryPayment(String accessToken) {
-        String auditNumber = generateAuditNumber();
-        String dateTime = ZonedDateTime.now(URUGUAY_ZONE).format(DATE_TIME_FORMATTER);
-
-        Map<String, Object> header = new HashMap<>();
-        header.put("netId", config.getNetId());
-        header.put("version", config.getVersion() != null ? config.getVersion() : "3.02");
-        header.put("auditNumber", auditNumber);
-        header.put("dateTime", dateTime);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("requestHeader", header);
-        body.put("accessToken", accessToken);
-
-        String signature = signatureService.generateSign(body);
-        header.put("digitalSign", signature);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
         try {
             // Fiserv's own docs state all operations are POST; paymentQuery's "(GET)" label
             // in the spec doesn't work in practice — a GET with a body gets served a WAF
             // bot-challenge page instead of reaching the API.
-            Map<String, Object> responseMap = postForResponseMap(config.getBaseUrl() + "/paymentQuery", request);
-            FiservResponseDTO response = objectMapper.convertValue(responseMap, FiservResponseDTO.class);
-
+            FiservResponseDTO response = postSignedTokenOp("/paymentQuery", accessToken);
             if (response != null && response.getResponseHeader() != null) {
-                if (!signatureService.verifySign(responseMap, response.getResponseHeader().getDigitalSign())) {
-                    log.warn("Invalid signature in Fiserv paymentQuery response");
-                }
-
                 if (!"00".equals(response.getResponseHeader().getResponseCode())) {
                     log.warn("Fiserv paymentQuery returned non-zero code: {} - {}",
                             response.getResponseHeader().getResponseCode(),
@@ -131,47 +105,20 @@ public class FiservClient {
     }
 
     public boolean voidPayment(String accessToken) {
-        String auditNumber = generateAuditNumber();
-        String dateTime = ZonedDateTime.now(URUGUAY_ZONE).format(DATE_TIME_FORMATTER);
-
-        Map<String, Object> header = new HashMap<>();
-        header.put("netId", config.getNetId());
-        header.put("version", config.getVersion() != null ? config.getVersion() : "3.02");
-        header.put("auditNumber", auditNumber);
-        header.put("dateTime", dateTime);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("requestHeader", header);
-        body.put("accessToken", accessToken);
-
-        String signature = signatureService.generateSign(body);
-        header.put("digitalSign", signature);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
         try {
-            Map<String, Object> responseMap = postForResponseMap(config.getBaseUrl() + "/voidPayment", request);
-            FiservResponseDTO response = objectMapper.convertValue(responseMap, FiservResponseDTO.class);
+            FiservResponseDTO response = postSignedTokenOp("/voidPayment", accessToken);
             if (response == null || response.getResponseHeader() == null) {
                 log.error("Empty response from Fiserv /voidPayment");
                 return false;
             }
-
-            if (!signatureService.verifySign(responseMap, response.getResponseHeader().getDigitalSign())) {
-                log.warn("Invalid signature in Fiserv voidPayment response");
-            }
-
             if ("00".equals(response.getResponseHeader().getResponseCode())) {
                 log.info("Fiserv void successful for token: {}", accessToken);
                 return true;
-            } else {
-                log.error("Fiserv voidPayment failed: {} - {}",
-                        response.getResponseHeader().getResponseCode(),
-                        response.getResponseHeader().getResponseDescription());
-                return false;
             }
+            log.error("Fiserv voidPayment failed: {} - {}",
+                    response.getResponseHeader().getResponseCode(),
+                    response.getResponseHeader().getResponseDescription());
+            return false;
         } catch (Exception e) {
             log.error("Error calling Fiserv /voidPayment", e);
             return false;
@@ -185,26 +132,13 @@ public class FiservClient {
             return;
         }
 
-        Map<String, Object> requestBody = new HashMap<>();
-        String dateTime = ZonedDateTime.now(URUGUAY_ZONE).format(DATE_TIME_FORMATTER);
-        String auditNumber = generateAuditNumber();
-
-        Map<String, Object> header = new HashMap<>();
-        header.put("netId", config.getNetId());
-        header.put("version", config.getVersion() != null ? config.getVersion() : "3.02");
-        header.put("auditNumber", auditNumber);
-        header.put("dateTime", dateTime);
-
-        requestBody.put("requestHeader", header);
-        String signature = signatureService.generateSign(requestBody);
-        header.put("digitalSign", signature);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        Map<String, Object> header = newRequestHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("requestHeader", header);
+        header.put("digitalSign", signatureService.generateSign(body));
 
         try {
-            Map<String, Object> responseMap = postForResponseMap(config.getBaseUrl() + "/echoTest", request);
+            Map<String, Object> responseMap = postForResponseMap(config.getBaseUrl() + "/echoTest", jsonEntity(body));
             FiservResponseDTO response = objectMapper.convertValue(responseMap, FiservResponseDTO.class);
             if (response != null && response.getResponseHeader() != null) {
                 if (!signatureService.verifySign(responseMap, response.getResponseHeader().getDigitalSign())) {
@@ -218,6 +152,41 @@ public class FiservClient {
         } catch (Exception e) {
             log.error("Error during Fiserv echoTest", e);
         }
+    }
+
+    // Header común de todo request a Fiserv (netId, versión con default, auditNumber, dateTime).
+    private Map<String, Object> newRequestHeader() {
+        Map<String, Object> header = new HashMap<>();
+        header.put("netId", config.getNetId());
+        header.put("version", config.getVersionOrDefault());
+        header.put("auditNumber", generateAuditNumber());
+        header.put("dateTime", ZonedDateTime.now(URUGUAY_ZONE).format(DATE_TIME_FORMATTER));
+        return header;
+    }
+
+    private HttpEntity<Map<String, Object>> jsonEntity(Map<String, Object> body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return new HttpEntity<>(body, headers);
+    }
+
+    // Operaciones sobre un pago ya existente (query, void): mismo header + {requestHeader,
+    // accessToken} + firma + POST + verificación de la firma de la respuesta. Devuelve la
+    // respuesta ya verificada (o null si vino vacía); cada caller interpreta código/datos.
+    private FiservResponseDTO postSignedTokenOp(String path, String accessToken) throws Exception {
+        Map<String, Object> header = newRequestHeader();
+        Map<String, Object> body = new HashMap<>();
+        body.put("requestHeader", header);
+        body.put("accessToken", accessToken);
+        header.put("digitalSign", signatureService.generateSign(body));
+
+        Map<String, Object> responseMap = postForResponseMap(config.getBaseUrl() + path, jsonEntity(body));
+        FiservResponseDTO response = objectMapper.convertValue(responseMap, FiservResponseDTO.class);
+        if (response != null && response.getResponseHeader() != null
+                && !signatureService.verifySign(responseMap, response.getResponseHeader().getDigitalSign())) {
+            log.warn("Invalid signature in Fiserv {} response", path);
+        }
+        return response;
     }
 
     private String generateAuditNumber() {

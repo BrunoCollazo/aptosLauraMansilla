@@ -1,7 +1,7 @@
 package com.bcollazo.lauraapartments.service;
 
 import com.bcollazo.lauraapartments.dto.request.AdminApartmentUpdateRequest;
-import com.bcollazo.lauraapartments.dto.response.ApartmentDTO;
+import com.bcollazo.lauraapartments.dto.response.AdminApartmentDTO;
 import com.bcollazo.lauraapartments.entity.Apartment;
 import com.bcollazo.lauraapartments.repository.ApartmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,16 +16,16 @@ public class AdminApartmentService {
 
     private final ApartmentRepository apartmentRepository;
 
-    public List<ApartmentDTO> getAllApartments() {
+    public List<AdminApartmentDTO> getAllApartments() {
         return apartmentRepository.findAll().stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // Guarda el estado completo del apartamento. Disponibilidad y precio se actualizan si vienen;
     // los descuentos se setean tal cual (null = sin ese descuento).
     @Transactional
-    public ApartmentDTO updateApartment(Long id, AdminApartmentUpdateRequest request) {
+    public AdminApartmentDTO updateApartment(Long id, AdminApartmentUpdateRequest request) {
         Apartment apartment = apartmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Apartment not found"));
 
@@ -46,8 +45,8 @@ public class AdminApartmentService {
         return convertToDTO(apartment);
     }
 
-    private ApartmentDTO convertToDTO(Apartment apartment) {
-        return ApartmentDTO.builder()
+    private AdminApartmentDTO convertToDTO(Apartment apartment) {
+        return AdminApartmentDTO.builder()
                 .id(apartment.getId())
                 .name(apartment.getName())
                 .available(apartment.isAvailable())

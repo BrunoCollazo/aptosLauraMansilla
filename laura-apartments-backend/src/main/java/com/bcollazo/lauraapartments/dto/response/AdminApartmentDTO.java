@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApartmentDTO {
+public class AdminApartmentDTO {
     private Long id;
     private String name;
     private boolean available;

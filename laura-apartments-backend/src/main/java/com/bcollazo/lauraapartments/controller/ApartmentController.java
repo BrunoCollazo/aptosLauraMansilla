@@ -1,6 +1,6 @@
 package com.bcollazo.lauraapartments.controller;
 
-import com.bcollazo.lauraapartments.dto.response.ApartmentResponseDTO;
+import com.bcollazo.lauraapartments.dto.response.PublicApartmentDTO;
 import com.bcollazo.lauraapartments.dto.response.QuoteResponseDTO;
 import com.bcollazo.lauraapartments.service.ApartmentService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class ApartmentController {
     private final ApartmentService apartmentService;
 
     @GetMapping
-    public ResponseEntity<List<ApartmentResponseDTO>> getAllApartments() {
+    public ResponseEntity<List<PublicApartmentDTO>> getAllApartments() {
         return ResponseEntity.ok(apartmentService.getAllApartments());
     }
 

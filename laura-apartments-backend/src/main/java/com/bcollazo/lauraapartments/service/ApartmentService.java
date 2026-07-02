@@ -1,14 +1,14 @@
 package com.bcollazo.lauraapartments.service;
 
-import com.bcollazo.lauraapartments.dto.response.ApartmentResponseDTO;
+import com.bcollazo.lauraapartments.dto.response.PublicApartmentDTO;
 import com.bcollazo.lauraapartments.dto.response.QuoteResponseDTO;
 import com.bcollazo.lauraapartments.entity.Apartment;
 import com.bcollazo.lauraapartments.repository.ApartmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,14 +17,14 @@ public class ApartmentService {
     private final ApartmentRepository apartmentRepository;
     private final PricingService pricingService;
 
-    public List<ApartmentResponseDTO> getAllApartments() {
+    public List<PublicApartmentDTO> getAllApartments() {
         return apartmentRepository.findAll().stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // Cotiza una estadía para que el front muestre el total real (con descuento e IVA por temporada).
-    public QuoteResponseDTO getQuote(Long apartmentId, java.time.LocalDate checkIn, int nights) {
+    public QuoteResponseDTO getQuote(Long apartmentId, LocalDate checkIn, int nights) {
         if (nights < 1) {
             throw new IllegalArgumentException("nights must be at least 1");
         }
@@ -37,8 +37,8 @@ public class ApartmentService {
         return pricingService.calculateQuote(apartment, checkIn, nights);
     }
 
-    private ApartmentResponseDTO mapToDTO(Apartment apartment) {
-        return ApartmentResponseDTO.builder()
+    private PublicApartmentDTO mapToDTO(Apartment apartment) {
+        return PublicApartmentDTO.builder()
                 .id(apartment.getId())
                 .name(apartment.getName())
                 .pricePerNight(apartment.getPricePerNight())

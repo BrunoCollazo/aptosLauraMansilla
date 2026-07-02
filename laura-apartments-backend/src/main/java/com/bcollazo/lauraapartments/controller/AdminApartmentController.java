@@ -1,7 +1,7 @@
 package com.bcollazo.lauraapartments.controller;
 
 import com.bcollazo.lauraapartments.dto.request.AdminApartmentUpdateRequest;
-import com.bcollazo.lauraapartments.dto.response.ApartmentDTO;
+import com.bcollazo.lauraapartments.dto.response.AdminApartmentDTO;
 import com.bcollazo.lauraapartments.service.AdminApartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +22,14 @@ public class AdminApartmentController {
     private final AdminApartmentService adminApartmentService;
 
     @GetMapping
-    public ResponseEntity<List<ApartmentDTO>> getAllApartments() {
+    public ResponseEntity<List<AdminApartmentDTO>> getAllApartments() {
         return ResponseEntity.ok(adminApartmentService.getAllApartments());
     }
 
     // Guarda todo el apartamento de una (disponibilidad, precio y descuentos) cuando el admin
     // aprieta Guardar. Reemplaza los PUT sueltos de /availability y /price.
     @PutMapping("/{id}")
-    public ResponseEntity<ApartmentDTO> updateApartment(
+    public ResponseEntity<AdminApartmentDTO> updateApartment(
             @PathVariable Long id,
             @RequestBody AdminApartmentUpdateRequest request) {
         return ResponseEntity.ok(adminApartmentService.updateApartment(id, request));
